@@ -1,0 +1,479 @@
+// TV-Watcher data model.
+//
+// Two ideas drive the shape of this schema:
+//
+//  1. A ReleaseEvent is a fact about the world ("Severance S2 premiered"),
+//     recorded once. A Notification is one delivery of that fact to one user
+//     on one channel. Keeping them separate lets a single detection fan out
+//     to every follower without re-deriving it, and gives us one place to
+//     dedupe.
+//
+//  2. Following a title and wanting a specific kind of alert about it are
+//     different decisions. A Follow says "I care about this"; AlertRule rows
+//     say "...and text me for these five things specifically." Nobody wants
+//     ten texts for ten episodes of a weekly show, so NEW_EPISODE is opt-in.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum MediaType {
+  MOVIE
+  TV
+}
+
+/// The five things a user can be told about. Each is independently
+/// subscribable per followed title.
+enum EventType {
+  /// A new season of a followed show is out.
+  SEASON_PREMIERE
+  /// A single episode is out. Opt-in; noisy for weekly shows.
+  NEW_EPISODE
+  /// A sequel / new entry appeared in a followed film's franchise.
+  FRANCHISE_ENTRY
+  /// A followed title landed on a service this user actually subscribes to.
+  ARRIVES_ON_MY_SERVICE
+  /// A film that had never been streamable anywhere became streamable.
+  /// This is the "I saw the trailer months ago" case.
+  STREAMING_DEBUT
+}
+
+/// How a title is offered on a service. The distinction matters more than
+/// aggregators usually admit: "on Prime Video" can mean included with your
+/// subscription or $19.99 to rent. We default alerts to FLATRATE only.
+enum OfferType {
+  FLATRATE
+  ADS
+  FREE
+  RENT
+  BUY
+}
+
+enum NotificationChannel {
+  SMS
+  EMAIL
+  PUSH
+  IN_APP
+}
+
+enum NotificationStatus {
+  PENDING
+  SCHEDULED
+  SENT
+  FAILED
+  /// Suppressed on purpose: quiet hours rolled it up, user opted out,
+  /// or the channel was unverified at send time.
+  SUPPRESSED
+}
+
+enum VerificationPurpose {
+  SIGNUP
+  LOGIN
+  ADD_CHANNEL
+  PASSWORD_RESET
+}
+
+/// How often the poller re-checks a title. Polling a film that is still in
+/// theatres every hour for streaming data that cannot exist yet is waste.
+enum RefreshTier {
+  /// Imminent or just-happened: check often.
+  HOT
+  /// Normal cadence.
+  WARM
+  /// Far from any expected release window.
+  COLD
+  /// Ended series, no franchise activity. Check rarely.
+  DORMANT
+}
+
+// ---------------------------------------------------------------------------
+// Accounts
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String  @id @default(cuid())
+  /// Either email or phone must be present; enforced in application code
+  /// because Postgres cannot express "at least one of" as a column check
+  /// across nullable uniques.
+  email        String? @unique
+  /// Always stored E.164 normalised (+15551234567).
+  phone        String? @unique
+  passwordHash String?
+
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+
+  displayName String?
+  /// IANA zone, e.g. "America/Los_Angeles". Drives quiet hours and the
+  /// wording of scheduled pre-release warnings.
+  timezone    String  @default("America/Los_Angeles")
+  /// ISO 3166-1 alpha-2. Streaming availability is per-country.
+  region      String  @default("US")
+
+  // Channel preferences.
+  smsEnabled   Boolean @default(false)
+  emailEnabled Boolean @default(true)
+  pushEnabled  Boolean @default(false)
+
+  /// Local-time minutes from midnight. A Netflix title dropping at 00:00 PT
+  /// should not wake someone at 3am ET; events inside quiet hours are held
+  /// until the window opens.
+  quietHoursStart Int? @default(1380) // 23:00
+  quietHoursEnd   Int? @default(420)  // 07:00
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions      Session[]
+  services      UserService[]
+  follows       Follow[]
+  notifications Notification[]
+  consents      ConsentRecord[]
+  verifications VerificationCode[]
+
+  @@index([createdAt])
+}
+
+model Session {
+  id String @id @default(cuid())
+  /// SHA-256 of the cookie value. The raw token is never stored, so a
+  /// database leak does not hand over live sessions.
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  userAgent String?
+  ipAddress String?
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model VerificationCode {
+  id          String              @id @default(cuid())
+  userId      String?
+  user        User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel     NotificationChannel
+  purpose     VerificationPurpose
+  /// Email address or E.164 phone the code was sent to.
+  destination String
+  /// Hashed, same reasoning as Session.tokenHash.
+  codeHash    String
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  attempts    Int                 @default(0)
+  createdAt   DateTime            @default(now())
+
+  @@index([destination, purpose])
+  @@index([expiresAt])
+}
+
+/// Written record of SMS consent. Required for A2P 10DLC compliance, and the
+/// thing you have to produce if a carrier audits the campaign.
+model ConsentRecord {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone       String
+  /// Verbatim copy of the disclosure text shown at opt-in.
+  consentText String
+  consentedAt DateTime  @default(now())
+  ipAddress   String?
+  userAgent   String?
+  revokedAt   DateTime?
+  /// Set when revocation came from an inbound STOP rather than the UI.
+  revokedVia  String?
+
+  @@index([userId])
+  @@index([phone])
+}
+
+// ---------------------------------------------------------------------------
+// Catalogue
+// ---------------------------------------------------------------------------
+
+/// A streaming service, as identified by TMDB's watch-provider ids.
+model Provider {
+  id              String  @id @default(cuid())
+  tmdbProviderId  Int     @unique
+  name            String
+  logoPath        String?
+  displayPriority Int     @default(999)
+
+  availability Availability[]
+  subscribers  UserService[]
+}
+
+/// Which services a user actually pays for. Availability alerts are filtered
+/// to these by default, because "it's on a service you don't have" is noise.
+model UserService {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, providerId])
+  @@index([userId])
+}
+
+/// A TMDB franchise grouping. This is our only structured signal for
+/// "is there going to be another one of these" on the film side.
+model Collection {
+  id           String  @id @default(cuid())
+  tmdbId       Int     @unique
+  name         String
+  posterPath   String?
+  backdropPath String?
+
+  titles Title[]
+}
+
+model Title {
+  id        String    @id @default(cuid())
+  tmdbId    Int
+  mediaType MediaType
+  /// TVmaze id, when we managed to match one. TVmaze has per-episode
+  /// timestamps that TMDB does not.
+  tvmazeId  Int?
+
+  name         String
+  originalName String?
+  overview     String?
+  posterPath   String?
+  backdropPath String?
+
+  /// Movies: theatrical/primary release. TV: first air date.
+  releaseDate DateTime?
+  /// TMDB status string, e.g. "Returning Series", "Released", "Post Production".
+  status      String?
+
+  popularity  Float @default(0)
+  voteAverage Float @default(0)
+  voteCount   Int   @default(0)
+
+  collectionId String?
+  collection   Collection? @relation(fields: [collectionId], references: [id])
+
+  /// True once we have ever seen any streaming offer for this title in any
+  /// region. Flipping false -> true is precisely STREAMING_DEBUT.
+  hasEverStreamed Boolean @default(false)
+
+  // Adaptive polling. See RefreshTier.
+  refreshTier     RefreshTier @default(WARM)
+  lastRefreshedAt DateTime?
+  nextRefreshAt   DateTime    @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  seasons      Season[]
+  episodes     Episode[]
+  availability Availability[]
+  follows      Follow[]
+  events       ReleaseEvent[]
+
+  @@unique([tmdbId, mediaType])
+  @@index([nextRefreshAt])
+  @@index([popularity])
+  @@index([collectionId])
+}
+
+model Season {
+  id           String    @id @default(cuid())
+  titleId      String
+  title        Title     @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  seasonNumber Int
+  name         String?
+  overview     String?
+  posterPath   String?
+  airDate      DateTime?
+  episodeCount Int       @default(0)
+
+  @@unique([titleId, seasonNumber])
+  @@index([titleId])
+}
+
+model Episode {
+  id            String @id @default(cuid())
+  titleId       String
+  title         Title  @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  seasonNumber  Int
+  episodeNumber Int
+  name          String?
+  overview      String?
+
+  /// Date-only, from TMDB.
+  airDate  DateTime?
+  /// Precise timestamp, from TVmaze when available. This is what lets us
+  /// fire at the drop rather than at midnight-ish.
+  airstamp DateTime?
+  runtime  Int?
+
+  @@unique([titleId, seasonNumber, episodeNumber])
+  @@index([titleId, airstamp])
+}
+
+/// One (title, region, provider, offerType) offer. Rows are never deleted;
+/// `removedAt` is set instead, so the history of a title moving between
+/// services stays intact and transitions remain detectable.
+model Availability {
+  id         String    @id @default(cuid())
+  titleId    String
+  title      Title     @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  providerId String
+  provider   Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  region     String
+  offerType  OfferType
+
+  firstSeenAt DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  removedAt   DateTime?
+
+  @@unique([titleId, region, providerId, offerType])
+  @@index([titleId, region])
+  @@index([removedAt])
+}
+
+// ---------------------------------------------------------------------------
+// Following and alert rules
+// ---------------------------------------------------------------------------
+
+model Follow {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  titleId String
+  title   Title  @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  /// Which offers count as "available" for this follow. Defaults to
+  /// subscription-included only.
+  offerTypes OfferType[] @default([FLATRATE])
+  /// When true, alert regardless of whether the user subscribes to the
+  /// service it landed on.
+  anyService Boolean     @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  alerts AlertRule[]
+
+  @@unique([userId, titleId])
+  @@index([userId])
+  @@index([titleId])
+  @@index([createdAt])
+}
+
+model AlertRule {
+  id        String    @id @default(cuid())
+  followId  String
+  follow    Follow    @relation(fields: [followId], references: [id], onDelete: Cascade)
+  eventType EventType
+  enabled   Boolean   @default(true)
+
+  @@unique([followId, eventType])
+  @@index([followId])
+}
+
+// ---------------------------------------------------------------------------
+// Events and delivery
+// ---------------------------------------------------------------------------
+
+/// Something that happened, recorded once globally regardless of how many
+/// users follow it.
+model ReleaseEvent {
+  id        String    @id @default(cuid())
+  titleId   String
+  title     Title     @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  eventType EventType
+
+  /// Stable identity for this event, e.g. "SEASON_PREMIERE:<titleId>:s2".
+  /// The unique constraint is what stops a flapping upstream API from
+  /// texting someone twice about the same thing.
+  dedupeKey String @unique
+
+  /// When the thing actually happens. May be in the future: most premieres
+  /// are announced well in advance, so we schedule rather than detect.
+  occursAt   DateTime
+  detectedAt DateTime @default(now())
+
+  /// Event-shaped extras: season number, provider id, offer type, region.
+  payload Json?
+
+  /// Set once fan-out has created Notification rows.
+  fannedOutAt DateTime?
+
+  notifications Notification[]
+
+  @@index([occursAt])
+  @@index([fannedOutAt])
+  @@index([titleId, eventType])
+}
+
+/// One delivery attempt of one event to one user on one channel.
+model Notification {
+  id             String              @id @default(cuid())
+  userId         String
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  releaseEventId String
+  releaseEvent   ReleaseEvent        @relation(fields: [releaseEventId], references: [id], onDelete: Cascade)
+  channel        NotificationChannel
+  status         NotificationStatus  @default(PENDING)
+
+  scheduledFor DateTime
+  sentAt       DateTime?
+  readAt       DateTime?
+
+  attempts          Int     @default(0)
+  failureReason     String?
+  /// Provider-side id (e.g. Twilio message SID) for delivery reconciliation.
+  providerMessageId String?
+
+  body String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, releaseEventId, channel])
+  @@index([status, scheduledFor])
+  @@index([userId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Operational
+// ---------------------------------------------------------------------------
+
+/// Cursor/heartbeat for the background pollers.
+model SyncState {
+  key         String    @id
+  lastRunAt   DateTime?
+  lastSuccess DateTime?
+  cursor      String?
+  lastError   String?
+  updatedAt   DateTime  @updatedAt
+}
+
+/// Fixed-window rate limiting. Phone signup sends real SMS that cost real
+/// money, so this is load-bearing rather than hygiene.
+model RateLimit {
+  id          String   @id @default(cuid())
+  bucket      String
+  identifier  String
+  windowStart DateTime
+  count       Int      @default(0)
+
+  @@unique([bucket, identifier, windowStart])
+  @@index([windowStart])
+}
