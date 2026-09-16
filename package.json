@@ -10,7 +10,11 @@
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "smoke": "tsx prisma/smoke.ts"
+    "smoke": "tsx prisma/smoke.ts",
+    "db:up": "bash scripts/dev-db.sh",
+    "db:seed": "tsx prisma/seed.ts",
+    "verify:detect": "tsx scripts/verify-detection.ts",
+    "verify:pipeline": "tsx scripts/verify-pipeline.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
