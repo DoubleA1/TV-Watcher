@@ -15,7 +15,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "verify:detect": "tsx scripts/verify-detection.ts",
     "verify:pipeline": "tsx scripts/verify-pipeline.ts",
-    "verify:taste": "tsx scripts/verify-taste.ts"
+    "verify:taste": "tsx scripts/verify-taste.ts",
+    "tmdb:check": "tsx scripts/tmdb-check.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
