@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { PosterArt } from '@/components/poster-art'
 import { tmdbImage } from '@/lib/providers'
+import { sheetHref } from '@/lib/sheet'
 import type { PlateTitle } from '@/lib/queries'
 
 /**
@@ -11,15 +12,18 @@ export function TitlePlate({
   title,
   tag,
   size = 'normal',
+  base = '/',
 }: {
   title: PlateTitle
   tag?: string | null
   size?: 'normal' | 'large'
+  /** Current page URL; the sheet opens as a parameter on it. */
+  base?: string
 }) {
   const poster = tmdbImage(title.posterPath, size === 'large' ? 'w500' : 'w342')
 
   return (
-    <Link href={`/title/${title.id}`} className="group block text-left">
+    <Link href={sheetHref(base, title.id)} scroll={false} className="group block text-left">
       <div className="relative aspect-[2/3] max-w-full overflow-hidden rounded-[4px] border border-line transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-line-lit">
         {poster ? (
           // eslint-disable-next-line @next/next/no-img-element

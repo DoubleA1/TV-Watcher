@@ -62,7 +62,7 @@ export async function signUpWithEmail(
   })
 
   await createSession(user.id, meta)
-  redirect('/onboarding')
+  redirect('/following')
 }
 
 export async function signIn(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -89,7 +89,7 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
   if (!(await verifyPassword(password, user.passwordHash))) return failure
 
   await createSession(user.id, meta)
-  redirect('/queue')
+  redirect('/following')
 }
 
 /**
@@ -146,8 +146,7 @@ export async function addPhoneNumber(
     data: { phone, phoneVerifiedAt: null },
   })
 
-  revalidatePath('/onboarding')
-  revalidatePath('/settings')
+  revalidatePath('/following')
   return { ok: true }
 }
 
@@ -169,5 +168,5 @@ export async function signInAsDemo(): Promise<void> {
   if (!user) throw new Error('Demo account not seeded — run npm run db:seed')
 
   await createSession(user.id, await clientMeta())
-  redirect('/queue')
+  redirect('/following')
 }

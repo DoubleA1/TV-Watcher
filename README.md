@@ -86,11 +86,41 @@ asks for.
 Quiet hours hold overnight alerts until morning — a midnight Pacific drop is 3am
 on the east coast.
 
+## The three pages
+
+- **Discover** (`/`) — search and the browse rails.
+- **Following** (`/following`) — what is armed, what you track, your services
+  and how we reach you.
+- **Find a film** (`/taste`) — taste calibration and recommendations.
+
+Title detail is an overlay driven by a `?title=` parameter rather than its own
+page, so it opens over whichever page you are on and stays linkable.
+
+## Taste calibration
+
+Fifteen free ratings, with a suggestion after every five — three in total.
+"I have not seen this" does not count against the allowance: it teaches us
+nothing about taste, so charging for it would be charging for our own bad
+guess. Past the allowance the feature is gated on `User.isPro`; no payment
+provider is wired up yet.
+
+Card selection mixes three buckets on every draw:
+
+| Bucket | Share | Why |
+|---|---|---|
+| Informative | 55% | Genres we hold least data on — each answer buys the most |
+| Aligned | 30% | Sharpens a known preference, and keeps the deck feeling relevant |
+| Wildcard | 15% | Reach only, so the model cannot converge on its own first guess |
+
+A hated genre is damped rather than zeroed, so it still surfaces occasionally.
+`npm run verify:taste` asserts these properties statistically.
+
 ## Checks
 
 ```bash
 npm run verify:detect    # detection is silent on backfill, fires on real changes
 npm run verify:pipeline  # detection -> fan-out -> delivery, and quiet hours
+npm run verify:taste     # selection variety, suppression, free-tier counting
 npm run smoke            # schema constraints that are easy to get wrong
 ```
 

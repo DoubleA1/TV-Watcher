@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react'
 type Star = { x: number; y: number; z: number; tint: number }
 
 /** Depth travelled per second. Low enough to read as drift, not warp. */
-const SPEED = 0.055
+const SPEED = 0.041
 
 function spawn(star: Star, depth?: number) {
   // Spread wider than the viewport so stars keep arriving from beyond the

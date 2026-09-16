@@ -29,6 +29,12 @@ export function PosterArt({ name, compact = false }: { name: string; compact?: b
           <stop offset="55%" stopColor="rgba(0,0,0,0)" />
           <stop offset="100%" stopColor="rgba(0,0,0,0.72)" />
         </linearGradient>
+        {/* Scanlines as a tiled pattern rather than 100 <line> elements.
+            At twenty cards a rail that difference is thousands of DOM nodes,
+            which is paid again on every re-render. */}
+        <pattern id={`${id}s`} width="3" height="3" patternUnits="userSpaceOnUse">
+          <rect width="3" height="1" fill="#000" opacity="0.18" />
+        </pattern>
       </defs>
 
       <rect width="200" height="300" fill={`url(#${id}g)`} />
@@ -43,13 +49,9 @@ export function PosterArt({ name, compact = false }: { name: string; compact?: b
         })}
       </g>
 
-      {/* Scanlines: ties the art to the console language of the rest of the site. */}
       <rect width="200" height="300" fill={`url(#${id}f)`} />
-      <g opacity="0.18">
-        {Array.from({ length: 100 }, (_, i) => (
-          <line key={i} x1="0" x2="200" y1={i * 3} y2={i * 3} stroke="#000" strokeWidth="1" />
-        ))}
-      </g>
+      {/* Ties the art to the console language of the rest of the site. */}
+      <rect width="200" height="300" fill={`url(#${id}s)`} />
 
       {!compact ? (
         <text

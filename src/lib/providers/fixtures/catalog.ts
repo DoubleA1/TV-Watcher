@@ -184,6 +184,94 @@ const UPCOMING: Array<[number, string, string[], number, number]> = [
   [1274939, 'Project Hail Mary', ['Science Fiction', 'Drama', 'Adventure'], 376, 48],
 ]
 
+
+/**
+ * A wider film pool, so taste calibration has enough to work with and the
+ * selection algorithm has real variety to explore. In production this is the
+ * whole TMDB catalogue; here it is enough breadth to exercise the scoring.
+ */
+const MORE_FILMS: Row[] = [
+  [155, 'The Dark Knight', 2008, ['Action', 'Crime', 'Drama'], 296],
+  [680, 'Pulp Fiction', 1994, ['Crime', 'Thriller'], 264],
+  [550, 'Fight Club', 1999, ['Drama', 'Thriller'], 258],
+  [13, 'Forrest Gump', 1994, ['Drama', 'Romance', 'Comedy'], 246],
+  [278, 'The Shawshank Redemption', 1994, ['Drama', 'Crime'], 288],
+  [238, 'The Godfather', 1972, ['Crime', 'Drama'], 274],
+  [603, 'The Matrix', 1999, ['Science Fiction', 'Action'], 282],
+  [1891, 'The Empire Strikes Back', 1980, ['Science Fiction', 'Adventure', 'Action'], 232],
+  [120, 'The Lord of the Rings: The Fellowship of the Ring', 2001, ['Fantasy', 'Adventure'], 270],
+  [122, 'The Lord of the Rings: The Return of the King', 2003, ['Fantasy', 'Adventure'], 268],
+  [129, 'Spirited Away', 2001, ['Animation', 'Fantasy', 'Family'], 250],
+  [4935, 'Howl\'s Moving Castle', 2004, ['Animation', 'Fantasy', 'Romance'], 196],
+  [8392, 'My Neighbor Totoro', 1988, ['Animation', 'Family', 'Fantasy'], 188],
+  [12477, 'Grave of the Fireflies', 1988, ['Animation', 'Drama'], 164],
+  [372058, 'Your Name.', 2016, ['Animation', 'Romance', 'Drama'], 226],
+  [354912, 'Coco', 2017, ['Animation', 'Family', 'Musical'], 232],
+  [12, 'Finding Nemo', 2003, ['Animation', 'Family', 'Adventure'], 210],
+  [14160, 'Up', 2009, ['Animation', 'Family', 'Adventure'], 218],
+  [508442, 'Soul', 2020, ['Animation', 'Family', 'Fantasy'], 208],
+  [150540, 'Inside Out', 2015, ['Animation', 'Family', 'Comedy'], 224],
+  [637, 'Life Is Beautiful', 1997, ['Drama', 'Comedy'], 172],
+  [389, '12 Angry Men', 1957, ['Drama', 'Crime'], 158],
+  [497, 'The Green Mile', 1999, ['Drama', 'Crime', 'Fantasy'], 202],
+  [769, 'GoodFellas', 1990, ['Crime', 'Drama'], 216],
+  [311, 'Once Upon a Time in America', 1984, ['Crime', 'Drama'], 142],
+  [274, 'The Silence of the Lambs', 1991, ['Crime', 'Thriller', 'Horror'], 228],
+  [694, 'The Shining', 1980, ['Horror', 'Thriller'], 234],
+  [539, 'Psycho', 1960, ['Horror', 'Thriller', 'Mystery'], 186],
+  [948, 'Halloween', 1978, ['Horror', 'Thriller'], 170],
+  [9552, 'The Exorcist', 1973, ['Horror'], 178],
+  [346364, 'It', 2017, ['Horror'], 212],
+  [138843, 'The Conjuring', 2013, ['Horror', 'Thriller', 'Mystery'], 198],
+  [396422, 'Annabelle: Creation', 2017, ['Horror', 'Thriller'], 144],
+  [381288, 'Split', 2016, ['Horror', 'Thriller'], 176],
+  [530915, '1917', 2019, ['Drama', 'History', 'Action'], 214],
+  [423, 'The Pianist', 2002, ['Drama', 'History'], 168],
+  [857, 'Saving Private Ryan', 1998, ['Drama', 'History', 'Action'], 222],
+  [424, "Schindler's List", 1993, ['Drama', 'History'], 226],
+  [205596, 'The Imitation Game', 2014, ['Drama', 'History', 'Thriller'], 194],
+  [335797, 'Sing', 2016, ['Animation', 'Comedy', 'Musical'], 152],
+  [512195, 'Red Notice', 2021, ['Action', 'Comedy', 'Crime'], 190],
+  [293660, 'Deadpool', 2016, ['Action', 'Comedy', 'Science Fiction'], 244],
+  [299536, 'Avengers: Infinity War', 2018, ['Action', 'Science Fiction', 'Adventure'], 286],
+  [299534, 'Avengers: Endgame', 2019, ['Action', 'Science Fiction', 'Adventure'], 292],
+  [634649, 'Spider-Man: No Way Home', 2021, ['Action', 'Science Fiction', 'Adventure'], 302],
+  [505642, 'Black Panther: Wakanda Forever', 2022, ['Action', 'Adventure', 'Science Fiction'], 236],
+  [453395, 'Doctor Strange in the Multiverse of Madness', 2022, ['Action', 'Fantasy', 'Horror'], 228],
+  [536554, 'M3GAN', 2022, ['Horror', 'Science Fiction', 'Comedy'], 182],
+  [631842, 'Knock at the Cabin', 2023, ['Horror', 'Mystery', 'Thriller'], 158],
+  [980078, 'Winnie the Pooh: Blood and Honey', 2023, ['Horror', 'Thriller'], 96],
+  [502356, 'The Super Mario Bros. Movie', 2023, ['Animation', 'Family', 'Adventure'], 268],
+  [976573, 'Elemental', 2023, ['Animation', 'Family', 'Romance'], 204],
+  [787699, 'Wonka', 2023, ['Comedy', 'Family', 'Fantasy'], 246],
+  [872906, 'Jules', 2023, ['Comedy', 'Drama', 'Science Fiction'], 88],
+  [906126, 'Society of the Snow', 2023, ['Drama', 'History'], 186],
+  [968051, 'The Nun II', 2023, ['Horror', 'Mystery', 'Thriller'], 174],
+  [1008042, 'Talk to Me', 2022, ['Horror', 'Thriller'], 190],
+  [713704, 'Evil Dead Rise', 2023, ['Horror'], 178],
+  [615656, 'Meg 2: The Trench', 2023, ['Action', 'Science Fiction', 'Horror'], 166],
+  [447277, 'The Little Mermaid', 2023, ['Adventure', 'Family', 'Fantasy'], 194],
+  [298618, 'The Flash', 2023, ['Action', 'Adventure', 'Science Fiction'], 202],
+  [569094123, 'Nimona', 2023, ['Animation', 'Fantasy', 'Adventure'], 172],
+  [840326, 'Boy Kills World', 2023, ['Action', 'Thriller'], 118],
+  [1029575, 'The Family Plan', 2023, ['Action', 'Comedy'], 148],
+  [634492, 'Madame Web', 2024, ['Action', 'Science Fiction'], 152],
+  [792308, 'Longlegs', 2024, ['Horror', 'Crime', 'Thriller'], 206],
+  [1022789, 'Inside Out 2', 2024, ['Animation', 'Family', 'Comedy'], 278],
+  [519182, 'Despicable Me 4', 2024, ['Animation', 'Family', 'Comedy'], 240],
+  [533535, 'Deadpool & Wolverine', 2024, ['Action', 'Comedy', 'Science Fiction'], 296],
+  [718821, 'Twisters', 2024, ['Action', 'Adventure', 'Drama'], 212],
+  [1016150, 'Heretic', 2024, ['Horror', 'Thriller'], 184],
+  [1032823, 'Trap', 2024, ['Thriller', 'Crime'], 168],
+  [889737, 'Joker: Folie a Deux', 2024, ['Drama', 'Crime', 'Musical'], 176],
+  [1100782, 'Smile 2', 2024, ['Horror', 'Mystery'], 180],
+  [845781, 'Red One', 2024, ['Action', 'Comedy', 'Fantasy'], 190],
+  [558449, 'Gladiator II', 2024, ['Action', 'Adventure', 'Drama'], 248],
+  [762509, 'Mufasa: The Lion King', 2024, ['Animation', 'Adventure', 'Family'], 226],
+  [539972, 'Kraven the Hunter', 2024, ['Action', 'Adventure', 'Thriller'], 148],
+  [1184918, 'The Wild Robot', 2024, ['Animation', 'Family', 'Science Fiction'], 256],
+]
+
 const DUNE_COLLECTION = { tmdbId: 726871, name: 'Dune Collection' }
 
 function toTitle(row: Row, kind: 'MOVIE' | 'TV'): SourceTitle {
@@ -295,6 +383,7 @@ function buildEntry(row: Row, kind: 'MOVIE' | 'TV'): FixtureEntry {
 
 export const FIXTURE_CATALOG: FixtureEntry[] = [
   ...FILMS.map((r) => buildEntry(r, 'MOVIE')),
+  ...MORE_FILMS.map((r) => buildEntry(r, 'MOVIE')),
   ...SHOWS.map((r) => buildEntry(r, 'TV')),
   // Unreleased. No offers anywhere by definition — that is the point.
   ...UPCOMING.map(([tmdbId, name, genres, popularity, daysOut]) => {

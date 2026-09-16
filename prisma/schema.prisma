@@ -113,6 +113,10 @@ model User {
   phoneVerifiedAt DateTime?
 
   displayName String?
+  /// Paid access to unlimited taste calibration. The free tier is a fixed
+  /// number of ratings, so entitlement has to live on the account rather
+  /// than in the browser.
+  isPro       Boolean @default(false)
   /// IANA zone, e.g. "America/Los_Angeles". Drives quiet hours and the
   /// wording of scheduled pre-release warnings.
   timezone    String  @default("America/Los_Angeles")
@@ -140,6 +144,7 @@ model User {
   notifications Notification[]
   consents      ConsentRecord[]
   verifications VerificationCode[]
+  suggestions   Suggestion[]
 
   @@index([createdAt])
 }
@@ -295,6 +300,7 @@ model Title {
   follows      Follow[]
   events       ReleaseEvent[]
   ratings      Rating[]
+  suggestions  Suggestion[]
 
   @@unique([tmdbId, mediaType])
   @@index([nextRefreshAt])
@@ -425,6 +431,28 @@ model Rating {
   @@unique([userId, titleId])
   @@index([userId, value])
   @@index([titleId])
+}
+
+/// A recommendation we put in front of someone, and what became of it.
+///
+/// Recorded rather than computed on the fly so a suggestion is never
+/// repeated, "I have seen that already" can swap it for another, and the
+/// free allowance can be counted honestly.
+model Suggestion {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  titleId String
+  title   Title  @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  /// Which milestone produced it — after the 5th rating, the 10th, and so on.
+  atRatingCount Int
+  shownAt       DateTime  @default(now())
+  /// Set when the viewer said they had already seen it.
+  dismissedAt   DateTime?
+
+  @@unique([userId, titleId])
+  @@index([userId, shownAt])
 }
 
 // ---------------------------------------------------------------------------

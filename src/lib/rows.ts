@@ -199,62 +199,58 @@ async function onService(providerId: string): Promise<PlateTitle[]> {
 }
 
 /**
+ * Shared rows are cached in-process for a short window.
+ *
+ * Opening the title overlay re-renders the page it sits on, which would
+ * otherwise re-run every rail query just to draw a modal — about a second
+ * of latency for a panel that contains none of that data. None of these
+ * rows needs per-second freshness; the poller updates them on its own
+ * cadence anyway.
+ */
+const SHARED_TTL_MS = 60_000
+let sharedCache: { at: number; rows: Row[] } | null = null
+
+async function sharedRows(): Promise<Row[]> {
+  if (sharedCache && Date.now() - sharedCache.at < SHARED_TTL_MS) {
+    return sharedCache.rows
+  }
+  const rows = await computeSharedRows()
+  sharedCache = { at: Date.now(), rows }
+  return rows
+}
+
+/** Drop the cache when ingest has changed what these rows would return. */
+export function invalidateRowCache(): void {
+  sharedCache = null
+}
+
+/**
  * Build the homepage.
  *
  * Personalised where we can: a signed-in user with services gets a row for
  * the one they have, positioned high because "on a service you already pay
  * for" is the most actionable row on the page.
  */
-export async function buildHomeRows(userId: string | null): Promise<Row[]> {
-  let service: { id: string; name: string } | null = null
-  if (userId) {
-    const owned = await prisma.userService.findFirst({
-      where: { userId },
-      orderBy: { provider: { displayPriority: 'asc' } },
-      select: { provider: { select: { id: true, name: true } } },
-    })
-    service = owned?.provider ?? null
-  }
+/** Everything that does not depend on who is looking. */
+async function computeSharedRows(): Promise<Row[]> {
+  const [today, week, movies, shows, risers, blockbusters, unstreamed, rated, scifi, horror, comedy] =
+    await Promise.all([
+      releasedToday(),
+      droppingThisWeek(),
+      newMovies(),
+      popularShows(),
+      quickRisers(),
+      upcomingBlockbusters(),
+      notStreamingYet(),
+      highestRated(),
+      byGenre('Science Fiction'),
+      byGenre('Horror'),
+      byGenre('Comedy'),
+    ])
 
-  const [
-    today,
-    week,
-    movies,
-    shows,
-    risers,
-    blockbusters,
-    unstreamed,
-    rated,
-    scifi,
-    horror,
-    comedy,
-    serviceRow,
-  ] = await Promise.all([
-    releasedToday(),
-    droppingThisWeek(),
-    newMovies(),
-    popularShows(),
-    quickRisers(),
-    upcomingBlockbusters(),
-    notStreamingYet(),
-    highestRated(),
-    byGenre('Science Fiction'),
-    byGenre('Horror'),
-    byGenre('Comedy'),
-    service ? onService(service.id) : Promise.resolve([]),
-  ])
-
-  const rows: Row[] = [
+  return [
     { key: 'week', heading: 'Dropping this week', note: 'Already armed — you will get the text', titles: week, feature: true },
     { key: 'today', heading: 'Landed in the last day', note: 'New to streaming', titles: today },
-    ...(service && serviceRow.length
-      ? [{
-          key: 'service',
-          heading: `Popular on ${service.name}`,
-          note: 'Included with what you already pay for',
-          titles: serviceRow,
-        }]
-      : []),
     { key: 'shows', heading: 'Popular shows right now', titles: shows },
     { key: 'movies', heading: 'New movie releases', titles: movies },
     { key: 'risers', heading: 'Climbing fast', note: 'Biggest jump since our last check', titles: risers },
@@ -265,6 +261,37 @@ export async function buildHomeRows(userId: string | null): Promise<Row[]> {
     { key: 'horror', heading: 'Horror', titles: horror },
     { key: 'comedy', heading: 'Comedy', titles: comedy },
   ]
+}
+
+export async function buildHomeRows(userId: string | null): Promise<Row[]> {
+  // The personalised rail is one cheap query and must not be cached across
+  // users, so it is computed per request and spliced into the shared set.
+  let service: { id: string; name: string } | null = null
+  if (userId) {
+    const owned = await prisma.userService.findFirst({
+      where: { userId },
+      orderBy: { provider: { displayPriority: 'asc' } },
+      select: { provider: { select: { id: true, name: true } } },
+    })
+    service = owned?.provider ?? null
+  }
+
+  const [shared, serviceTitles] = await Promise.all([
+    sharedRows(),
+    service ? onService(service.id) : Promise.resolve([]),
+  ])
+
+  const rows = [...shared]
+  if (service && serviceTitles.length > 0) {
+    // High up: "on a service you already pay for" is the most actionable
+    // row on the page.
+    rows.splice(2, 0, {
+      key: 'service',
+      heading: `Popular on ${service.name}`,
+      note: 'Included with what you already pay for',
+      titles: serviceTitles,
+    })
+  }
 
   // A rail with one or two cards reads as broken rather than as sparse, so
   // the bar is a rail that actually looks like a rail.

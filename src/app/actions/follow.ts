@@ -34,8 +34,8 @@ export async function toggleFollow(titleId: string): Promise<void> {
     })
   }
 
-  revalidatePath(`/title/${titleId}`)
-  revalidatePath('/queue')
+  revalidatePath('/')
+  revalidatePath('/following')
 }
 
 export async function setAlert(
@@ -58,8 +58,8 @@ export async function setAlert(
     update: { enabled },
   })
 
-  revalidatePath(`/title/${titleId}`)
-  revalidatePath('/queue')
+  revalidatePath('/')
+  revalidatePath('/following')
 }
 
 export async function setOfferTypes(titleId: string, offerTypes: OfferType[]): Promise<void> {
@@ -70,7 +70,7 @@ export async function setOfferTypes(titleId: string, offerTypes: OfferType[]): P
     where: { userId: user.id, titleId },
     data: { offerTypes },
   })
-  revalidatePath(`/title/${titleId}`)
+  revalidatePath('/')
 }
 
 export async function toggleService(providerId: string): Promise<void> {
@@ -88,6 +88,5 @@ export async function toggleService(providerId: string): Promise<void> {
     await prisma.userService.create({ data: { userId: user.id, providerId } })
   }
 
-  revalidatePath('/settings')
-  revalidatePath('/queue')
+  revalidatePath('/following')
 }

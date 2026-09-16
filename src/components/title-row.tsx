@@ -8,7 +8,7 @@ import type { Row } from '@/lib/rows'
  * without burying the sections underneath, and horizontal overflow is
  * scoped to the rail so the page body never scrolls sideways.
  */
-export function TitleRow({ row }: { row: Row }) {
+export function TitleRow({ row, base = '/' }: { row: Row; base?: string }) {
   const width = row.feature ? 'w-[168px]' : 'w-[132px]'
 
   return (
@@ -28,7 +28,7 @@ export function TitleRow({ row }: { row: Row }) {
             className={`${width} shrink-0`}
             style={{ scrollSnapAlign: 'start' }}
           >
-            <TitlePlate title={title} size={row.feature ? 'large' : 'normal'} />
+            <TitlePlate title={title} size={row.feature ? 'large' : 'normal'} base={base} />
           </div>
         ))}
       </div>

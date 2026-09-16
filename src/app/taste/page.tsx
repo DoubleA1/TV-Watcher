@@ -1,22 +1,37 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getSessionUser } from '@/lib/auth/session'
-import { MIN_RATINGS, nextToRate, recommend, getTasteProfile } from '@/lib/taste'
+import {
+  FREE_RATING_LIMIT,
+  SUGGESTION_INTERVAL,
+  currentSuggestion,
+  getEntitlement,
+  getTasteProfile,
+  nextToRate,
+  recommend,
+} from '@/lib/taste'
 import { SiteHeader } from '@/components/site-header'
 import { TasteDeck } from '@/components/taste-deck'
 import { PosterArt } from '@/components/poster-art'
 import { resetRatings } from '@/app/actions/taste'
+import { TitleSheet } from '@/components/title-sheet'
+import { sheetBase, sheetHref } from '@/lib/sheet'
 
 export const metadata = { title: "Can't find a good movie to watch?" }
 
 export default async function TastePage({ searchParams }: PageProps<'/taste'>) {
   const user = await getSessionUser()
-  if (!user) redirect('/login?next=/taste')
+  if (!user) redirect('/welcome?next=/taste')
 
   const params = await searchParams
   const view = typeof params.view === 'string' ? params.view : null
+  const openTitle = typeof params.title === 'string' ? params.title : null
+  const base = sheetBase('/taste', params)
 
-  const profile = await getTasteProfile(user.id)
+  const [profile, entitlement] = await Promise.all([
+    getTasteProfile(user.id),
+    getEntitlement(user.id),
+  ])
 
   // First visit: say what is about to happen before it happens.
   if (profile.rated === 0 && view !== 'rate') {
@@ -34,8 +49,10 @@ export default async function TastePage({ searchParams }: PageProps<'/taste'>) {
               loved it, liked it, disliked it, hated it, or have not seen it.
             </p>
             <p className="mt-4 text-[15.5px] leading-relaxed text-ink-dim">
-              About {MIN_RATINGS} answers is enough to get somewhere useful. Saying you have
-              not seen something still helps — it tells us where to stop asking.
+              You get {FREE_RATING_LIMIT} free ratings, and a suggestion after every{' '}
+              {SUGGESTION_INTERVAL} — three in total. Saying you have not seen something is
+              free and does not count against them; it still helps, because it tells us where
+              to stop asking.
             </p>
 
             <div className="panel mt-7 p-5">
@@ -73,7 +90,7 @@ export default async function TastePage({ searchParams }: PageProps<'/taste'>) {
     )
   }
 
-  if (view === 'results' || (profile.rated >= MIN_RATINGS && view !== 'rate')) {
+  if (view === 'results' || (entitlement.locked && view !== 'rate')) {
     const picks = await recommend(user.id, 12)
 
     return (
@@ -82,7 +99,7 @@ export default async function TastePage({ searchParams }: PageProps<'/taste'>) {
         <main className="mx-auto max-w-[1180px] px-[var(--gutter)] pb-24 pt-10">
           <div className="mb-5 flex flex-wrap items-end justify-between gap-4 border-b border-line pb-4">
             <div>
-              <div className="readout">Based on {profile.seen} films you have seen</div>
+              <div className="readout">Based on {profile.counted} verdicts</div>
               <h1 className="display mt-3 text-[1.8rem]">Watch this</h1>
             </div>
             <div className="flex gap-2">
@@ -135,7 +152,8 @@ export default async function TastePage({ searchParams }: PageProps<'/taste'>) {
               {picks.map((pick) => (
                 <Link
                   key={pick.id}
-                  href={`/title/${pick.id}`}
+                  href={sheetHref(base, pick.id)}
+                  scroll={false}
                   className="group flex gap-4 rounded-md border border-line bg-panel p-3 transition-colors hover:border-line-lit"
                 >
                   <div className="w-[74px] shrink-0 overflow-hidden rounded-[3px] border border-line">
@@ -164,20 +182,42 @@ export default async function TastePage({ searchParams }: PageProps<'/taste'>) {
             </div>
           )}
         </main>
+        {openTitle ? <TitleSheet titleId={openTitle} closeHref={base} /> : null}
       </>
     )
   }
 
-  const cards = await nextToRate(user.id, 14)
+  const [cards, suggestion] = await Promise.all([
+    nextToRate(user.id, 16),
+    // Only fetch a suggestion when one is actually due, so we do not burn a
+    // recommendation pass on every card.
+    profile.counted > 0 && profile.counted % SUGGESTION_INTERVAL === 0
+      ? currentSuggestion(user.id)
+      : Promise.resolve(null),
+  ])
 
   return (
     <>
       <SiteHeader />
       <main className="mx-auto max-w-[1180px] px-[var(--gutter)] pb-24 pt-10">
-        <div className="mx-auto max-w-[680px]">
-          <TasteDeck cards={cards} alreadyRated={profile.rated} target={MIN_RATINGS} />
+        <div className="mx-auto max-w-[760px]">
+          <div className="mb-6">
+            <div className="readout">Taste calibration</div>
+            <h1 className="display mt-3 text-[1.5rem]">
+              Can&apos;t find a good movie to watch?
+            </h1>
+          </div>
+          <TasteDeck
+            cards={cards}
+            counted={entitlement.counted}
+            freeLimit={FREE_RATING_LIMIT}
+            interval={SUGGESTION_INTERVAL}
+            suggestion={suggestion}
+            isPro={entitlement.isPro}
+          />
         </div>
       </main>
+      {openTitle ? <TitleSheet titleId={openTitle} closeHref={base} /> : null}
     </>
   )
 }

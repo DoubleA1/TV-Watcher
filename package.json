@@ -14,7 +14,8 @@
     "db:up": "bash scripts/dev-db.sh",
     "db:seed": "tsx prisma/seed.ts",
     "verify:detect": "tsx scripts/verify-detection.ts",
-    "verify:pipeline": "tsx scripts/verify-pipeline.ts"
+    "verify:pipeline": "tsx scripts/verify-pipeline.ts",
+    "verify:taste": "tsx scripts/verify-taste.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

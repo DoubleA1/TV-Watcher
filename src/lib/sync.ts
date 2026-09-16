@@ -12,6 +12,7 @@
  * anyone twice.
  */
 import { prisma } from './db'
+import { invalidateRowCache } from './rows'
 import { catalog, type MediaKind, type OfferKind, type SourceEpisode } from './providers'
 import { getEpisodes, matchShow } from './providers/tvmaze'
 import type { EventType, RefreshTier } from '@/generated/prisma/enums'
@@ -581,6 +582,9 @@ export async function syncDueTitles(limit = 25): Promise<SyncStats> {
       stats.errors.push(`${t.name}: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
+
+  // New titles or availability mean the browse rows are stale.
+  if (stats.titlesTouched > 0) invalidateRowCache()
 
   await prisma.syncState.upsert({
     where: { key: 'titles' },
