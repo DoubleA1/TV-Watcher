@@ -5,12 +5,12 @@
 
 <style>
 /* ===========================================================================
-   TV-Watcher — interface prototype.
+   TV-Watcher — interactive mirror of the built application.
 
-   The product is a monitoring console: it watches release signals and texts
-   you the moment one fires. So the visual language borrows from instruments
-   rather than from entertainment marketing — hairline panels, monospace
-   readouts, status chips, a faint survey grid.
+   This is a static stand-in for the real Next.js app, kept in step with it so
+   the three pages can be clicked through without a deployment. Cover art is
+   generated here exactly as it is in the app: a duotone ground, one of six
+   geometric motifs, all derived from a hash of the title.
 
    Deliberately single-theme. A console has one look; it does not follow the
    reader's OS preference. Every colour is painted explicitly so the page
@@ -33,7 +33,7 @@
   --signal:      #45e0d0;
   --signal-deep: #0c6d69;
   --signal-glow: rgba(69, 224, 208, 0.13);
-  /* Amber is semantic, never decorative: it means the thing has dropped. */
+  /* Amber is semantic, never decorative: the thing has actually dropped. */
   --live:        #ffb340;
   --live-glow:   rgba(255, 179, 64, 0.13);
 
@@ -58,16 +58,17 @@ body {
   overflow-x: hidden;
 }
 
-/* Survey grid + cold glow. Fixed, behind everything, inert to pointers. */
+#stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 0;
   background-image:
-    linear-gradient(to right, rgba(69, 224, 208, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(69, 224, 208, 0.05) 1px, transparent 1px);
-  background-size: 68px 68px;
+    linear-gradient(to right, rgba(69, 224, 208, 0.028) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(69, 224, 208, 0.028) 1px, transparent 1px);
+  background-size: 76px 76px;
   -webkit-mask-image: radial-gradient(ellipse 130% 85% at 50% 0%, #000 15%, transparent 72%);
           mask-image: radial-gradient(ellipse 130% 85% at 50% 0%, #000 15%, transparent 72%);
   pointer-events: none;
@@ -80,13 +81,6 @@ body::after {
   background:
     radial-gradient(ellipse 95% 50% at 50% -10%, rgba(69, 224, 208, 0.15), transparent 62%),
     radial-gradient(ellipse 55% 40% at 88% 4%, rgba(255, 179, 64, 0.05), transparent 68%);
-  pointer-events: none;
-}
-
-#stars {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
   pointer-events: none;
 }
 
@@ -111,8 +105,6 @@ h1, h2, h3 {
   font-weight: 500;
 }
 
-.num { font-variant-numeric: tabular-nums; }
-
 /* --------------------------------------------------------------- chrome -- */
 
 .topbar {
@@ -131,7 +123,7 @@ h1, h2, h3 {
   padding-block: 11px;
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
@@ -145,7 +137,6 @@ h1, h2, h3 {
   font-size: 14px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink);
   white-space: nowrap;
 }
 
@@ -157,17 +148,21 @@ h1, h2, h3 {
   flex: none;
 }
 
-/* Prototype screen switcher. Styled as console chrome so it reads as part of
-   the instrument rather than as a broken site nav. */
-.switcher {
-  display: flex;
-  gap: 4px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  margin-left: auto;
-  padding: 2px;
+.flag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--live);
+  border: 1px solid rgba(255, 179, 64, 0.32);
+  background: var(--live-glow);
+  border-radius: var(--radius);
+  padding: 4px 9px;
+  white-space: nowrap;
 }
-.switcher::-webkit-scrollbar { display: none; }
+
+nav.tabs { display: flex; gap: 3px; margin-left: auto; overflow-x: auto; scrollbar-width: none; }
+nav.tabs::-webkit-scrollbar { display: none; }
 
 .tab {
   font-family: var(--mono);
@@ -184,69 +179,29 @@ h1, h2, h3 {
   transition: color .16s, border-color .16s, background .16s;
 }
 .tab:hover { color: var(--ink-dim); border-color: var(--line); }
-.tab[aria-selected="true"] {
-  color: var(--signal);
-  border-color: var(--signal-deep);
-  background: var(--signal-glow);
-}
+.tab[aria-selected="true"] { color: var(--signal); border-color: var(--signal-deep); background: var(--signal-glow); }
 
-.proto-flag {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--live);
-  border: 1px solid rgba(255, 179, 64, 0.32);
-  background: var(--live-glow);
-  border-radius: var(--radius);
-  padding: 4px 9px;
-  white-space: nowrap;
-}
-
-main {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding-inline: var(--gutter);
-  padding-block: 0 96px;
-}
-
-.screen { padding-top: 40px; }
+main { max-width: 1180px; margin: 0 auto; padding-inline: var(--gutter); padding-block: 0 90px; }
 
 /* ------------------------------------------------------------------ hero -- */
 
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  gap: clamp(28px, 5vw, 64px);
+  gap: clamp(28px, 5vw, 60px);
   align-items: center;
-  padding-block: clamp(20px, 4vw, 44px) clamp(24px, 4vw, 48px);
+  padding-block: clamp(20px, 4vw, 44px);
 }
 
 .hero h1 {
-  font-size: clamp(2.3rem, 6.2vw, 4.1rem);
+  font-size: clamp(2.1rem, 5.6vw, 3.7rem);
   font-variation-settings: "wdth" 122;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
-
-.hero h1 em {
-  font-style: normal;
-  color: var(--signal);
-}
-
-.hero-sub {
-  color: var(--ink-dim);
-  font-size: clamp(1rem, 1.6vw, 1.12rem);
-  max-width: 46ch;
-  margin-top: 20px;
-}
-
-.hero-cta {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 30px;
-}
+.hero h1 em { font-style: normal; color: var(--signal); }
+.hero-sub { color: var(--ink-dim); font-size: clamp(1rem, 1.6vw, 1.1rem); max-width: 46ch; margin-top: 20px; }
+.hero-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
 
 .btn {
   font-family: var(--body);
@@ -258,272 +213,44 @@ main {
   border: 1px solid transparent;
   transition: background .16s, border-color .16s, color .16s;
 }
-.btn-primary {
-  background: var(--signal);
-  color: #04120f;
-  border-color: var(--signal);
-}
+.btn-primary { background: var(--signal); color: #04120f; border-color: var(--signal); }
 .btn-primary:hover { background: #63ecdd; border-color: #63ecdd; }
-.btn-ghost {
-  background: transparent;
-  color: var(--ink);
-  border-color: var(--line-lit);
-}
+.btn-ghost { background: transparent; color: var(--ink); border-color: var(--line-lit); }
 .btn-ghost:hover { border-color: var(--signal-deep); color: var(--signal); }
-.btn-block { width: 100%; }
 
-/* The countdown is the thesis: we know exactly when, to the second. */
 .counter {
   border: 1px solid var(--line);
   border-radius: 6px;
-  background:
-    linear-gradient(180deg, rgba(69, 224, 208, 0.055), transparent 58%),
-    var(--panel);
-  padding: 22px;
+  background: linear-gradient(180deg, rgba(69,224,208,0.055), transparent 58%), var(--panel);
+  padding: 20px;
 }
-
 .counter-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--line);
-  margin-bottom: 18px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding-bottom: 13px; border-bottom: 1px solid var(--line); margin-bottom: 16px;
 }
-
 .pulse {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--signal);
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--signal);
 }
-.pulse i {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--signal);
-  animation: blip 2.3s ease-in-out infinite;
-}
-@keyframes blip {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.25; }
-}
+.pulse i { width: 6px; height: 6px; border-radius: 50%; background: var(--signal); animation: blip 2.3s ease-in-out infinite; }
+@keyframes blip { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
 
-.counter-title {
-  font-family: var(--display);
-  font-variation-settings: "wdth" 115;
-  font-weight: 700;
-  font-size: 1.32rem;
-  margin-bottom: 3px;
-}
+.counter-title { font-family: var(--display); font-variation-settings: "wdth" 115; font-weight: 700; font-size: 1.3rem; }
 .counter-meta { color: var(--ink-dim); font-size: 13px; }
 
-.clock {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-top: 20px;
-}
-.clock-cell {
-  background: var(--panel-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 12px 6px 9px;
-  text-align: center;
-}
-.clock-val {
-  font-family: var(--mono);
-  font-size: clamp(1.4rem, 4vw, 1.85rem);
-  font-weight: 600;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-.clock-lab {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  margin-top: 7px;
-}
-
-.counter-foot {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
-  font-size: 12.5px;
-  color: var(--ink-dim);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.clock { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 18px; }
+.clock-cell { background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 6px 9px; text-align: center; }
+.clock-val { font-family: var(--mono); font-size: clamp(1.4rem, 4vw, 1.8rem); font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.clock-lab { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-faint); margin-top: 7px; }
+.counter-foot { margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--ink-dim); display: flex; align-items: center; gap: 8px; }
 .counter-foot svg { flex: none; color: var(--signal); }
 
-/* --------------------------------------------------------------- section -- */
+/* ----------------------------------------------------------------- search -- */
 
-.sec-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--line);
-}
-.sec-head h2 { font-size: 1.22rem; font-variation-settings: "wdth" 114; }
-.sec-note { color: var(--ink-faint); font-size: 12.5px; }
-
-.block { margin-top: clamp(40px, 6vw, 62px); }
-
-/* ---------------------------------------------------------------- plates -- */
-
-.grid-titles {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-  gap: 14px;
-}
-
-.plate { text-align: left; background: none; border: 0; padding: 0; cursor: pointer; }
-
-.plate-art {
-  position: relative;
-  aspect-ratio: 2 / 3;
-  max-width: 100%;
-  border-radius: var(--radius);
-  border: 1px solid var(--line);
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  transition: border-color .18s, transform .18s;
-}
-.plate:hover .plate-art { border-color: var(--line-lit); transform: translateY(-2px); }
-.plate:focus-visible .plate-art { outline: 2px solid var(--signal); outline-offset: 2px; }
-
-.plate-art::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    repeating-linear-gradient(0deg, rgba(0,0,0,0.20) 0 1px, transparent 1px 3px);
-  opacity: .5;
-}
-
-.plate-glyph {
-  font-family: var(--display);
-  font-variation-settings: "wdth" 120;
-  font-weight: 800;
-  font-size: 2rem;
-  letter-spacing: 0.06em;
-  color: rgba(233, 238, 250, 0.82);
-  z-index: 1;
-}
-
-.plate-tag {
-  position: absolute;
-  left: 7px; top: 7px;
-  z-index: 2;
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 3px 6px;
-  border-radius: 3px;
-  background: rgba(5, 7, 13, 0.78);
-  border: 1px solid var(--line-lit);
-  color: var(--ink-dim);
-}
-.plate-tag.is-live {
-  color: var(--live);
-  border-color: rgba(255, 179, 64, 0.4);
-}
-
-.plate-name {
-  font-size: 13px;
-  font-weight: 500;
-  margin-top: 9px;
-  line-height: 1.34;
-}
-.plate-sub {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  color: var(--ink-faint);
-  margin-top: 3px;
-  letter-spacing: 0.04em;
-}
-
-/* ---------------------------------------------------------------- signals -- */
-
-.grid-signals {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.signal-cell {
-  background: var(--panel);
-  padding: 22px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-.signal-ico {
-  color: var(--signal);
-  width: 22px; height: 22px;
-}
-.signal-cell h3 {
-  font-size: 0.97rem;
-  font-variation-settings: "wdth" 112;
-  font-weight: 600;
-}
-.signal-cell p {
-  margin: 0;
-  color: var(--ink-dim);
-  font-size: 13px;
-  line-height: 1.55;
-}
-.signal-flag {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  border: 1px solid var(--line);
-  border-radius: 3px;
-  padding: 3px 7px;
-  align-self: flex-start;
-  margin-top: 2px;
-}
-
-/* ------------------------------------------------------------------ forms -- */
-
-.panel {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: clamp(22px, 4vw, 34px);
-}
-
-.form-narrow { max-width: 430px; margin-inline: auto; }
-
-.field-row { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
-
-label.lab {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-dim);
-}
+.search-wrap { position: relative; max-width: 620px; margin: 22px auto 0; }
+.search-wrap svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); pointer-events: none; }
+.search-wrap input { padding-left: 38px; }
 
 input[type="text"], input[type="email"], input[type="password"], input[type="tel"], input[type="search"] {
   width: 100%;
@@ -537,1140 +264,1051 @@ input[type="text"], input[type="email"], input[type="password"], input[type="tel
   transition: border-color .16s, box-shadow .16s;
 }
 input::placeholder { color: var(--ink-faint); }
-input:focus {
-  outline: none;
-  border-color: var(--signal-deep);
-  box-shadow: 0 0 0 3px var(--signal-glow);
-}
+input:focus { outline: none; border-color: var(--signal-deep); box-shadow: 0 0 0 3px var(--signal-glow); }
 
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 22px 0;
-  color: var(--ink-faint);
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-}
-.divider::before, .divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--line);
-}
+/* ----------------------------------------------------------------- rails -- */
 
-.fineprint {
-  font-size: 11.5px;
-  color: var(--ink-faint);
-  line-height: 1.55;
-  margin-top: 14px;
-}
-.fineprint a { color: var(--ink-dim); }
-
-/* ----------------------------------------------------------------- search -- */
-
-.search-wrap { position: relative; max-width: 560px; }
-.search-wrap svg {
-  position: absolute;
-  left: 13px; top: 50%;
-  transform: translateY(-50%);
-  color: var(--ink-faint);
-  pointer-events: none;
-}
-.search-wrap input { padding-left: 38px; }
-
-.result {
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) auto;
-  gap: 15px;
-  align-items: center;
-  padding: 13px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--panel);
-  margin-bottom: 9px;
-}
-.result-art {
-  aspect-ratio: 2 / 3;
-  border-radius: 3px;
-  display: grid;
-  place-items: center;
-  font-family: var(--display);
-  font-variation-settings: "wdth" 120;
-  font-weight: 800;
-  font-size: 0.86rem;
-  color: rgba(233, 238, 250, 0.8);
-  border: 1px solid var(--line);
-}
-.result-name { font-weight: 500; font-size: 14.5px; }
-.result-meta {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  color: var(--ink-faint);
-  letter-spacing: 0.05em;
-  margin-top: 2px;
-}
-
-.btn-follow {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 8px 13px;
-  border-radius: var(--radius);
-  border: 1px solid var(--line-lit);
-  background: transparent;
-  color: var(--ink-dim);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all .16s;
-}
-.btn-follow:hover { border-color: var(--signal-deep); color: var(--signal); }
-.btn-follow[aria-pressed="true"] {
-  background: var(--signal-glow);
-  border-color: var(--signal-deep);
-  color: var(--signal);
-}
-
-/* ------------------------------------------------------------ title sheet -- */
-
-.sheet {
-  display: grid;
-  grid-template-columns: 190px minmax(0, 1fr);
-  gap: clamp(20px, 4vw, 38px);
-  align-items: start;
-}
-
-.stat-strip {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  overflow: hidden;
-  margin: 20px 0 26px;
-}
-.stat {
-  background: var(--panel);
-  padding: 12px 14px;
-}
-.stat-val {
-  font-family: var(--mono);
-  font-size: 14px;
-  font-weight: 600;
-  margin-top: 4px;
-  font-variant-numeric: tabular-nums;
-}
-.stat-val.is-live { color: var(--live); }
-.stat-val.is-signal { color: var(--signal); }
-
-/* Offer rows — the flatrate / rent distinction is the product's opinion,
-   so it gets real visual weight rather than a footnote. */
-.offer {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 13px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--panel);
-  margin-bottom: 8px;
-}
-.offer-logo {
-  width: 32px; height: 32px;
-  border-radius: 3px;
-  display: grid;
-  place-items: center;
-  font-family: var(--display);
-  font-variation-settings: "wdth" 118;
-  font-weight: 800;
-  font-size: 11px;
-  color: #04120f;
-  flex: none;
-}
-.offer-name { font-size: 14px; font-weight: 500; flex: 1; min-width: 0; }
-.offer-you {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--signal);
-  border: 1px solid var(--signal-deep);
-  background: var(--signal-glow);
-  border-radius: 3px;
-  padding: 3px 6px;
-  white-space: nowrap;
-}
-.offer-kind {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.offer-kind.included { color: var(--signal); }
-.offer-kind.rent { color: var(--ink-faint); }
-
-/* ------------------------------------------------------------- alert rows -- */
-
-.rule {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 16px;
-  align-items: center;
-  padding: 15px 0;
+.sec { margin-top: clamp(30px, 4vw, 46px); }
+.sec-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 14px; flex-wrap: wrap; margin-bottom: 12px; padding-bottom: 10px;
   border-bottom: 1px solid var(--line);
 }
-.rule:last-child { border-bottom: 0; }
-.rule-name {
-  font-size: 14.5px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  flex-wrap: wrap;
+.sec-head h2 { font-size: 1.12rem; font-variation-settings: "wdth" 114; }
+.sec-note { color: var(--ink-faint); font-size: 12px; }
+
+.rail {
+  display: flex; gap: 14px; overflow-x: auto; padding-bottom: 8px;
+  margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter);
+  scroll-snap-type: x proximity; scrollbar-width: thin;
 }
-.rule-desc { color: var(--ink-dim); font-size: 12.5px; margin-top: 3px; line-height: 1.5; }
-.rule-optin {
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  border: 1px solid var(--line);
-  border-radius: 3px;
-  padding: 2px 6px;
+.rail > * { flex: none; scroll-snap-align: start; }
+
+.grid-titles { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 14px; }
+
+.plate { text-align: left; background: none; border: 0; padding: 0; cursor: pointer; width: 132px; }
+.plate.lg { width: 168px; }
+.plate-art {
+  position: relative; aspect-ratio: 2/3; max-width: 100%;
+  border-radius: var(--radius); border: 1px solid var(--line); overflow: hidden;
+  transition: border-color .18s, transform .18s;
+}
+.plate:hover .plate-art { border-color: var(--line-lit); transform: translateY(-2px); }
+.plate:focus-visible .plate-art { outline: 2px solid var(--signal); outline-offset: 2px; }
+.plate-art svg { display: block; width: 100%; height: 100%; }
+.plate-tag {
+  position: absolute; left: 7px; top: 7px; z-index: 2;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 3px 6px; border-radius: 3px; background: rgba(5,7,13,0.85);
+  border: 1px solid var(--line-lit); color: var(--ink-dim);
+}
+.plate-tag.live { color: var(--live); border-color: rgba(255,179,64,0.4); }
+.plate-name { font-size: 13px; font-weight: 500; margin-top: 9px; line-height: 1.34; }
+.plate-sub { font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); margin-top: 3px; }
+
+/* --------------------------------------------------------------- panels -- */
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.pad { padding: clamp(18px, 3vw, 28px); }
+
+.signals { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.signal { background: var(--panel); padding: 20px; display: flex; flex-direction: column; gap: 9px; }
+.signal svg { color: var(--signal); width: 22px; height: 22px; }
+.signal h3 { font-size: .97rem; font-variation-settings: "wdth" 112; font-weight: 600; }
+.signal p { margin: 0; color: var(--ink-dim); font-size: 13px; line-height: 1.55; }
+.signal-flag {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--ink-faint); border: 1px solid var(--line); border-radius: 3px; padding: 3px 7px; align-self: flex-start;
 }
 
-.sw {
-  position: relative;
-  width: 42px; height: 24px;
-  border-radius: 12px;
-  background: var(--panel-3);
-  border: 1px solid var(--line-lit);
-  cursor: pointer;
-  flex: none;
-  transition: background .18s, border-color .18s;
-}
-.sw::after {
-  content: "";
-  position: absolute;
-  top: 3px; left: 3px;
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  background: var(--ink-faint);
-  transition: transform .18s, background .18s;
-}
-.sw[aria-checked="true"] {
-  background: var(--signal-glow);
-  border-color: var(--signal-deep);
-}
-.sw[aria-checked="true"]::after {
-  transform: translateX(18px);
-  background: var(--signal);
-}
-.sw:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
-
-.chip-row { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
-.chip {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 6px 10px;
-  border-radius: 3px;
-  border: 1px solid var(--line);
-  background: transparent;
-  color: var(--ink-faint);
-  cursor: pointer;
-  transition: all .16s;
-}
-.chip:hover { border-color: var(--line-lit); color: var(--ink-dim); }
-.chip[aria-pressed="true"] {
-  border-color: var(--signal-deep);
-  background: var(--signal-glow);
-  color: var(--signal);
-}
-
-/* -------------------------------------------------------------- dashboard -- */
+/* --------------------------------------------------------------- queue -- */
 
 .queue { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-
-.queue-day {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  background: var(--panel-2);
-  padding: 8px 15px;
-  border-bottom: 1px solid var(--line);
-}
-
-.queue-row {
-  display: grid;
-  grid-template-columns: 62px minmax(0, 1fr) auto;
-  gap: 14px;
-  align-items: center;
-  padding: 13px 15px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--line);
-}
+.queue-day { font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-faint); background: var(--panel-2); padding: 8px 15px; border-bottom: 1px solid var(--line); }
+.queue-row { display: grid; grid-template-columns: 52px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 12px 15px; background: var(--panel); border-bottom: 1px solid var(--line); }
 .queue-row:last-child { border-bottom: 0; }
+.queue-time { font-family: var(--mono); font-size: 12px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+.queue-name { font-size: 14px; font-weight: 500; cursor: pointer; }
+.queue-name:hover { color: var(--signal); }
+.queue-sub { font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); margin-top: 2px; }
+.chip-armed { font-family: var(--mono); font-size: 10px; letter-spacing: 0.11em; text-transform: uppercase; padding: 4px 8px; border-radius: 3px; white-space: nowrap; color: var(--signal); border: 1px solid var(--signal-deep); background: var(--signal-glow); }
 
-.queue-time {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--ink-dim);
-  font-variant-numeric: tabular-nums;
+.chip-row { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 12px; }
+.chip {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 6px 10px; border-radius: 3px; border: 1px solid var(--line);
+  background: transparent; color: var(--ink-faint); cursor: pointer; transition: all .16s;
 }
-.queue-name { font-size: 14px; font-weight: 500; }
-.queue-sub {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  color: var(--ink-faint);
-  margin-top: 2px;
-  letter-spacing: 0.04em;
-}
-.queue-state {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  padding: 4px 8px;
-  border-radius: 3px;
-  white-space: nowrap;
-  border: 1px solid var(--line-lit);
-  color: var(--ink-faint);
-}
-.queue-state.armed { color: var(--signal); border-color: var(--signal-deep); background: var(--signal-glow); }
-.queue-state.sent  { color: var(--live);   border-color: rgba(255,179,64,.35); background: var(--live-glow); }
+.chip:hover { border-color: var(--line-lit); color: var(--ink-dim); }
+.chip[aria-pressed="true"] { border-color: var(--signal-deep); background: var(--signal-glow); color: var(--signal); }
 
-/* ------------------------------------------------------------------ phone -- */
+dl.meta { margin: 14px 0 0; display: flex; flex-direction: column; gap: 12px; font-size: 13.5px; }
+dl.meta > div { display: flex; justify-content: space-between; gap: 14px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+dl.meta dt { color: var(--ink-dim); }
+dl.meta dd { margin: 0; font-family: var(--mono); font-size: 12.5px; }
 
-.phone-split {
-  display: grid;
-  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
-  gap: clamp(26px, 5vw, 56px);
-  align-items: start;
-}
+/* --------------------------------------------------------------- taste -- */
 
-.phone {
-  border: 1px solid var(--line-lit);
-  border-radius: 26px;
-  background: var(--panel);
-  padding: 13px;
-  box-shadow: 0 0 60px rgba(69, 224, 208, 0.07);
-  max-width: 100%;
+.bar { height: 3px; width: 100%; background: var(--panel-3); border-radius: 99px; overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--signal); transition: width .3s; }
+
+.scale { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.verdict {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  border-radius: 5px; border: 1px solid var(--line-lit); background: transparent;
+  color: var(--ink); padding: 13px 8px; cursor: pointer; transition: all .16s;
+  font-family: var(--body); font-size: 13px; font-weight: 500;
 }
-.phone-screen {
-  background: var(--void);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 16px 13px;
-  min-height: 430px;
-  display: flex;
-  flex-direction: column;
-  gap: 13px;
+.verdict.v1 { border-color: rgba(255,179,64,0.45); background: var(--live-glow); color: var(--live); }
+.verdict.v2 { color: var(--ink-dim); }
+.verdict.v2:hover { border-color: rgba(255,179,64,0.45); color: var(--live); }
+.verdict.v3:hover { border-color: var(--signal-deep); color: var(--signal); }
+.verdict.v4 { border-color: var(--signal-deep); background: var(--signal-glow); color: var(--signal); }
+.bars { display: flex; align-items: flex-end; gap: 3px; }
+.bars i { width: 4px; border-radius: 1px; background: currentColor; }
+
+.not-seen {
+  margin-top: 12px; width: 100%; border: 1px dashed var(--line); background: transparent;
+  color: var(--ink-faint); border-radius: 5px; padding: 12px; cursor: pointer;
+  font-family: var(--body); font-size: 13px; transition: all .16s;
 }
-.phone-head {
-  text-align: center;
-  padding-bottom: 11px;
-  border-bottom: 1px solid var(--line);
-}
-.phone-from {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--ink-dim);
-  letter-spacing: 0.08em;
+.not-seen:hover { border-color: var(--line-lit); color: var(--ink-dim); }
+.not-seen small { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; opacity: .7; margin-left: 8px; }
+
+.reason {
+  display: inline-block; border: 1px solid var(--signal-deep); background: var(--signal-glow);
+  color: var(--signal); border-radius: 3px; padding: 6px 10px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
 }
 
-.sms { display: flex; flex-direction: column; gap: 5px; }
-.sms-bubble {
-  background: var(--panel-2);
-  border: 1px solid var(--line);
-  border-radius: 14px 14px 14px 3px;
-  padding: 11px 13px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--ink);
-}
-.sms-bubble strong { color: var(--signal); font-weight: 600; }
-.sms-bubble.live-msg { border-color: rgba(255, 179, 64, 0.28); }
-.sms-bubble.live-msg strong { color: var(--live); }
-.sms-stamp {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  color: var(--ink-faint);
-  letter-spacing: 0.08em;
-  padding-left: 5px;
-}
+/* --------------------------------------------------------------- sheet -- */
 
-.note-list { display: flex; flex-direction: column; gap: 16px; }
-.note {
-  border-left: 2px solid var(--line-lit);
-  padding-left: 16px;
+.backdrop {
+  position: fixed; inset: 0; z-index: 50; display: flex; justify-content: center;
+  align-items: flex-start; overflow-y: auto; background: rgba(5,7,13,0.8);
+  backdrop-filter: blur(4px); padding: max(12px, var(--gutter));
 }
-.note.accent { border-left-color: var(--signal); }
-.note h3 { font-size: 0.98rem; font-variation-settings: "wdth" 112; margin-bottom: 5px; }
-.note p { margin: 0; color: var(--ink-dim); font-size: 13.5px; line-height: 1.6; }
+.sheet {
+  width: 100%; max-width: 860px; margin: 24px 0; border-radius: 8px;
+  border: 1px solid var(--line-lit); background: var(--panel);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.65);
+}
+.sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); padding: 16px clamp(18px,3vw,28px); }
+.sheet-close { background: transparent; border: 1px solid var(--line); color: var(--ink-faint); border-radius: var(--radius); padding: 6px 10px; cursor: pointer; font-family: var(--mono); font-size: 11px; }
+.sheet-close:hover { border-color: var(--line-lit); color: var(--ink); }
+.sheet-body { display: grid; gap: clamp(18px,3vw,28px); padding: clamp(18px,3vw,26px) clamp(18px,3vw,28px); grid-template-columns: 150px minmax(0,1fr); }
 
-/* ---------------------------------------------------------------- utility -- */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.stat { background: var(--panel); padding: 11px 13px; }
+.stat-val { font-family: var(--mono); font-size: 14px; font-weight: 600; margin-top: 4px; }
+.stat-val.live { color: var(--live); }
+
+.offer { display: flex; align-items: center; gap: 12px; padding: 10px 13px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2); margin-bottom: 8px; }
+.offer-logo { width: 32px; height: 32px; border-radius: 3px; display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 11px; flex: none; }
+.offer-name { font-size: 14px; font-weight: 500; flex: 1; min-width: 0; }
+.offer-you { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--signal); border: 1px solid var(--signal-deep); background: var(--signal-glow); border-radius: 3px; padding: 3px 6px; white-space: nowrap; }
+.offer-kind { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+.offer-kind.inc { color: var(--signal); }
+.offer-kind.rent { color: var(--ink-faint); }
+
+.rule { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--line); }
+.rule:last-child { border-bottom: 0; }
+.rule-name { font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.rule-desc { color: var(--ink-dim); font-size: 12.5px; margin-top: 3px; line-height: 1.5; }
+.rule-optin { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); border: 1px solid var(--line); border-radius: 3px; padding: 2px 6px; }
+
+.sw { position: relative; width: 42px; height: 24px; border-radius: 12px; background: var(--panel-3); border: 1px solid var(--line-lit); cursor: pointer; flex: none; transition: all .18s; }
+.sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--ink-faint); transition: transform .18s, background .18s; }
+.sw[aria-checked="true"] { background: var(--signal-glow); border-color: var(--signal-deep); }
+.sw[aria-checked="true"]::after { transform: translateX(18px); background: var(--signal); }
+.sw:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
 
 .prose { color: var(--ink-dim); max-width: 62ch; font-size: 14.5px; }
-.stack-20 { display: flex; flex-direction: column; gap: 20px; }
-.mt-26 { margin-top: 26px; }
-.center { text-align: center; }
+.fine { font-size: 11.5px; color: var(--ink-faint); line-height: 1.55; }
+.foot { border-top: 1px solid var(--line); margin-top: 60px; padding-top: 20px; color: var(--ink-faint); font-size: 12px; display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.hidden { display: none !important; }
 
-.foot {
-  border-top: 1px solid var(--line);
-  margin-top: 70px;
-  padding-top: 22px;
-  color: var(--ink-faint);
-  font-size: 12px;
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  flex-wrap: wrap;
-}
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
 
 @media (max-width: 860px) {
   .hero { grid-template-columns: 1fr; }
-  .sheet { grid-template-columns: 1fr; }
-  .sheet > .sheet-art { max-width: 165px; }
-  .phone-split { grid-template-columns: 1fr; }
-  .topbar-in { padding-block: 9px; }
-  .switcher { margin-left: 0; width: 100%; order: 3; }
+  .sheet-body { grid-template-columns: 1fr; }
+  .sheet-art { max-width: 150px; margin-inline: auto; }
+  nav.tabs { margin-left: 0; width: 100%; order: 3; }
 }
-
+@media (max-width: 520px) {
+  .scale { grid-template-columns: repeat(2, 1fr); }
+}
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-  }
+  *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
 }
 </style>
 
 <canvas id="stars" aria-hidden="true"></canvas>
 
 <div class="shell">
-
-<header class="topbar">
-  <div class="topbar-in">
-    <div class="mark"><span class="mark-dot"></span>TV-Watcher</div>
-    <span class="proto-flag">Prototype · sample data</span>
-    <nav class="switcher" role="tablist" aria-label="Prototype screens">
-      <button class="tab" role="tab" aria-selected="true"  data-screen="welcome">Welcome</button>
-      <button class="tab" role="tab" aria-selected="false" data-screen="signup">Sign up</button>
-      <button class="tab" role="tab" aria-selected="false" data-screen="search">Search</button>
-      <button class="tab" role="tab" aria-selected="false" data-screen="title">Title</button>
-      <button class="tab" role="tab" aria-selected="false" data-screen="queue">My queue</button>
-      <button class="tab" role="tab" aria-selected="false" data-screen="alert">The text</button>
-    </nav>
-  </div>
-</header>
-
-<main>
-
-<!-- ================================================================ WELCOME -->
-<section class="screen" id="screen-welcome">
-
-  <div class="hero">
-    <div>
-      <div class="readout">Release monitoring · 214 services · US</div>
-      <h1 class="mt-26">You already know what you want to watch. <em>We watch for it.</em></h1>
-      <p class="hero-sub">
-        Follow a show or a film once. When the next season lands, when the sequel gets
-        announced, or when it finally turns up on a service you already pay for —
-        your phone buzzes. No app to open. No checking.
-      </p>
-      <div class="hero-cta">
-        <button class="btn btn-primary" data-goto="signup">Start tracking</button>
-        <button class="btn btn-ghost" data-goto="alert">See what the text looks like</button>
-      </div>
+  <header class="topbar">
+    <div class="topbar-in">
+      <div class="mark"><span class="mark-dot"></span>TV-Watcher</div>
+      <span class="flag">Prototype · sample data</span>
+      <nav class="tabs" role="tablist" aria-label="Pages">
+        <button class="tab" role="tab" aria-selected="true"  data-page="discover">Discover</button>
+        <button class="tab" role="tab" aria-selected="false" data-page="following">Following</button>
+        <button class="tab" role="tab" aria-selected="false" data-page="taste">Find a film</button>
+      </nav>
     </div>
+  </header>
 
-    <div class="counter">
-      <div class="counter-head">
-        <span class="pulse"><i></i>Armed</span>
-        <span class="readout">Next in your region</span>
-      </div>
-      <div class="counter-title">Severance — Season 3</div>
-      <div class="counter-meta">Apple TV+ · S03E01 · 00:00 PT</div>
-
-      <div class="clock" id="clock">
-        <div class="clock-cell"><div class="clock-val" id="c-d">--</div><div class="clock-lab">Days</div></div>
-        <div class="clock-cell"><div class="clock-val" id="c-h">--</div><div class="clock-lab">Hrs</div></div>
-        <div class="clock-cell"><div class="clock-val" id="c-m">--</div><div class="clock-lab">Min</div></div>
-        <div class="clock-cell"><div class="clock-val" id="c-s">--</div><div class="clock-lab">Sec</div></div>
-      </div>
-
-      <div class="counter-foot">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-        Text goes out the second it unlocks — not the next morning.
-      </div>
-    </div>
-  </div>
-
-  <div class="block">
-    <div class="sec-head">
-      <h2>Tracked in the last 24 hours</h2>
-      <span class="sec-note">What other people started following</span>
-    </div>
-    <div class="grid-titles" id="trending"></div>
-  </div>
-
-  <div class="block">
-    <div class="sec-head">
-      <h2>Five different things worth knowing</h2>
-      <span class="sec-note">Switch each one on per title</span>
-    </div>
-    <p class="prose" style="margin-bottom:22px">
-      Most trackers offer one switch: notify me about this. That gets you ten texts
-      for ten episodes of a weekly show, and then you stop reading the texts.
-      These are separate on purpose.
-    </p>
-    <div class="grid-signals">
-
-      <div class="signal-cell">
-        <svg class="signal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18"/><path d="M5 12h14"/><path d="M7 17h10"/></svg>
-        <h3>New season</h3>
-        <p>The show you love is back. Premiere dates are published weeks ahead, so this one fires on a timer at the exact drop.</p>
-      </div>
-
-      <div class="signal-cell">
-        <svg class="signal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="2.6"/></svg>
-        <h3>New episode</h3>
-        <p>Every week, as it airs. Useful for one or two shows you are actually mid-watch on.</p>
-        <span class="signal-flag">Off by default</span>
-      </div>
-
-      <div class="signal-cell">
-        <svg class="signal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="12" r="2.2"/><path d="M8 7.5l8 3.2M8 16.5l8-3.2"/></svg>
-        <h3>Sequel announced</h3>
-        <p>A new entry shows up in the franchise. You hear that it is happening — often long before anyone announces a date.</p>
-      </div>
-
-      <div class="signal-cell">
-        <svg class="signal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h12v14H3z"/><path d="M21 12h-8"/><path d="M16 8l5 4-5 4"/></svg>
-        <h3>Lands on your service</h3>
-        <p>It moved to something you already subscribe to. Included with the subscription — not a $19.99 rental dressed up as availability.</p>
-      </div>
-
-      <div class="signal-cell">
-        <svg class="signal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.2"/></svg>
-        <h3>Finally streaming</h3>
-        <p>You saw the trailer eight months ago. It has never been streamable anywhere. Now it is.</p>
-      </div>
-
-    </div>
-  </div>
-
-  <div class="foot">
-    <span>Streaming availability via TMDB / JustWatch · Episode timing via TVmaze</span>
-    <span>Sample data throughout — nothing here is wired up yet</span>
-  </div>
-</section>
-
-<!-- ================================================================= SIGNUP -->
-<section class="screen" id="screen-signup" hidden>
-  <div class="form-narrow">
-    <div class="center" style="margin-bottom:26px">
-      <div class="readout">Step 1 of 2</div>
-      <h2 class="mt-26" style="font-size:1.7rem">Where should we reach you?</h2>
-      <p class="prose center" style="margin:12px auto 0">
-        A text is the point. Email works too, but it will not wake you up for a midnight drop.
-      </p>
-    </div>
-
-    <div class="panel">
-      <div class="field-row">
-        <label class="lab" for="su-phone">Mobile number</label>
-        <input type="tel" id="su-phone" placeholder="(555) 019-4827" autocomplete="tel">
-      </div>
-      <button class="btn btn-primary btn-block">Send me a code</button>
-
-      <p class="fineprint">
-        We text you a 6-digit code to confirm the number. After that you only ever get
-        alerts you switched on yourself. Reply STOP any time to end them. Message and
-        data rates may apply.
-      </p>
-
-      <div class="divider">or</div>
-
-      <div class="field-row">
-        <label class="lab" for="su-email">Email</label>
-        <input type="email" id="su-email" placeholder="you@example.com" autocomplete="email">
-      </div>
-      <div class="field-row">
-        <label class="lab" for="su-pass">Password</label>
-        <input type="password" id="su-pass" placeholder="At least 12 characters" autocomplete="new-password">
-      </div>
-      <button class="btn btn-ghost btn-block">Create account with email</button>
-    </div>
-
-    <div class="panel" style="margin-top:14px">
-      <div class="readout">Step 2 · which services do you pay for?</div>
-      <p class="prose" style="font-size:13.5px;margin:10px 0 0">
-        This is what makes “it is on a service you have” mean anything. Change it whenever.
-      </p>
-      <div class="chip-row" id="svc-chips"></div>
-    </div>
-  </div>
-</section>
-
-<!-- ================================================================= SEARCH -->
-<section class="screen" id="screen-search" hidden>
-  <div class="sec-head">
-    <h2>Find something to follow</h2>
-    <span class="sec-note">Shows, films, and things not out yet</span>
-  </div>
-
-  <div class="search-wrap" style="margin-bottom:22px">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-    <label class="lab" for="q" style="position:absolute;left:-9999px">Search titles</label>
-    <input type="search" id="q" value="dune" autocomplete="off">
-  </div>
-
-  <div class="readout" style="margin-bottom:12px">4 results · sorted by relevance</div>
-  <div id="results"></div>
-
-  <p class="prose mt-26" style="font-size:13px">
-    Films that have not been released yet can still be followed. That is the whole point of
-    the <strong style="color:var(--ink)">Finally streaming</strong> signal — you follow it the day you
-    see the trailer, and it sits there quietly for however many months it takes.
-  </p>
-</section>
-
-<!-- ================================================================== TITLE -->
-<section class="screen" id="screen-title" hidden>
-  <div class="sheet">
-    <div class="sheet-art">
-      <div class="plate-art" style="background:linear-gradient(152deg, hsl(279 62% 22%), hsl(317 55% 9%))">
-        <span class="plate-glyph">SE</span>
-      </div>
-    </div>
-
-    <div>
-      <div class="readout">Series · 2022 · Apple TV+ original</div>
-      <h2 class="mt-26" style="font-size:2rem">Severance</h2>
-
-      <div class="stat-strip">
-        <div class="stat">
-          <div class="readout">Status</div>
-          <div class="stat-val is-signal">Returning</div>
-        </div>
-        <div class="stat">
-          <div class="readout">Next episode</div>
-          <div class="stat-val">S03E01</div>
-        </div>
-        <div class="stat">
-          <div class="readout">Drops in</div>
-          <div class="stat-val is-live num" id="title-eta">--</div>
-        </div>
-        <div class="stat">
-          <div class="readout">Following</div>
-          <div class="stat-val">2,847</div>
-        </div>
-      </div>
-
-      <div class="readout" style="margin-bottom:10px">Where it streams · United States</div>
-      <div class="offer">
-        <div class="offer-logo" style="background:#45e0d0">TV</div>
-        <div class="offer-name">Apple TV+</div>
-        <span class="offer-you">You have this</span>
-        <span class="offer-kind included">Included</span>
-      </div>
-      <div class="offer">
-        <div class="offer-logo" style="background:#5a6b85;color:#e9eefa">AZ</div>
-        <div class="offer-name">Prime Video</div>
-        <span class="offer-kind rent">Rent · $3.99/ep</span>
-      </div>
-
-      <div class="panel mt-26">
-        <div class="readout" style="margin-bottom:6px">Tell me when</div>
-        <div id="rules"></div>
-
-        <div style="border-top:1px solid var(--line);margin-top:6px;padding-top:16px">
-          <div class="readout">Counts as “available” when it is</div>
-          <div class="chip-row" id="offer-chips"></div>
-          <p class="fineprint" style="margin-top:12px">
-            Leave this on <strong style="color:var(--ink)">Included</strong> and you will never get a
-            text telling you something is “available” when it actually costs $19.99 to rent.
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ================================================================== QUEUE -->
-<section class="screen" id="screen-queue" hidden>
-  <div class="sec-head">
-    <h2>What is coming</h2>
-    <span class="sec-note">9 titles followed · 3 alerts armed this week</span>
-  </div>
-
-  <div class="queue">
-    <div class="queue-day">Friday</div>
-    <div class="queue-row">
-      <div class="queue-time">00:00</div>
-      <div>
-        <div class="queue-name">Severance — S03E01</div>
-        <div class="queue-sub">Apple TV+ · New season</div>
-      </div>
-      <span class="queue-state armed">Armed</span>
-    </div>
-    <div class="queue-row">
-      <div class="queue-time">03:01</div>
-      <div>
-        <div class="queue-name">The Bear — S05E01</div>
-        <div class="queue-sub">Hulu · New season</div>
-      </div>
-      <span class="queue-state armed">Armed</span>
-    </div>
-
-    <div class="queue-day">Next Tuesday</div>
-    <div class="queue-row">
-      <div class="queue-time">00:00</div>
-      <div>
-        <div class="queue-name">Fallout — S02E04</div>
-        <div class="queue-sub">Prime Video · New episode</div>
-      </div>
-      <span class="queue-state armed">Armed</span>
-    </div>
-
-    <div class="queue-day">Already sent</div>
-    <div class="queue-row">
-      <div class="queue-time">Tue</div>
-      <div>
-        <div class="queue-name">Poor Things</div>
-        <div class="queue-sub">Max · Finally streaming — included</div>
-      </div>
-      <span class="queue-state sent">Texted</span>
-    </div>
-    <div class="queue-row">
-      <div class="queue-time">Sun</div>
-      <div>
-        <div class="queue-name">Dune: Messiah</div>
-        <div class="queue-sub">Sequel announced · no date yet</div>
-      </div>
-      <span class="queue-state sent">Texted</span>
-    </div>
-  </div>
-
-  <div class="block">
-    <div class="sec-head"><h2>Everything you follow</h2></div>
-    <div class="grid-titles" id="following"></div>
-  </div>
-</section>
-
-<!-- ================================================================== ALERT -->
-<section class="screen" id="screen-alert" hidden>
-  <div class="phone-split">
-    <div class="phone">
-      <div class="phone-screen">
-        <div class="phone-head"><div class="phone-from">TV-Watcher · (555) 001-8820</div></div>
-
-        <div class="sms">
-          <div class="sms-bubble live-msg"><strong>Severance S3 is live.</strong> Episode 1 just unlocked on Apple TV+ — included with your subscription.</div>
-          <div class="sms-stamp">Fri 00:00</div>
-        </div>
-
-        <div class="sms">
-          <div class="sms-bubble live-msg"><strong>Poor Things is finally streaming.</strong> It landed on Max tonight, included. First time it has streamed anywhere.</div>
-          <div class="sms-stamp">Tue 21:14</div>
-        </div>
-
-        <div class="sms">
-          <div class="sms-bubble"><strong>Dune: Messiah is happening.</strong> It was just added as the next film in the series. No release date yet — we will keep watching.</div>
-          <div class="sms-stamp">Sun 11:02</div>
-        </div>
-
-        <div class="sms">
-          <div class="sms-bubble">Heads up: <strong>The Bear S5</strong> drops Friday at 00:00 on Hulu.</div>
-          <div class="sms-stamp">Wed 18:30</div>
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <div class="readout">The actual product</div>
-      <h2 class="mt-26" style="font-size:1.65rem">Everything else is scaffolding around these four messages.</h2>
-
-      <div class="note-list mt-26">
-        <div class="note accent">
-          <h3>It says what it costs you</h3>
-          <p>“Included with your subscription” is doing real work. A title being technically available on a service you have is not the same as being watchable tonight without paying again.</p>
-        </div>
-        <div class="note accent">
-          <h3>It fires at the unlock, not the next morning</h3>
-          <p>Premiere times are published in advance, so the message is scheduled rather than discovered. The countdown on the welcome screen is the same clock that sends it.</p>
-        </div>
-        <div class="note">
-          <h3>A sequel getting announced is worth a text</h3>
-          <p>Months before a date exists, somebody green-lit the thing you have been waiting for. Nobody else tells you this.</p>
-        </div>
-        <div class="note">
-          <h3>Nothing arrives at 3am unless you said so</h3>
-          <p>Quiet hours hold overnight alerts until morning. A midnight drop on the west coast is 3am on the east, and a text that wakes you up is a text you turn off.</p>
-        </div>
-      </div>
-
-      <div class="panel mt-26">
-        <div class="readout" style="margin-bottom:9px">Not yet real</div>
-        <p class="prose" style="font-size:13.5px;margin:0">
-          Sending these requires carrier registration (A2P 10DLC) that takes about a week to
-          approve. Until it clears, alerts go by email and the phone path stays dark.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-</main>
+  <main>
+    <section id="page-discover"></section>
+    <section id="page-following" hidden></section>
+    <section id="page-taste" hidden></section>
+  </main>
 </div>
 
+<div id="sheet-root"></div>
+
 <script>
-
-// --- starfield ------------------------------------------------------------
-// Stars carry a depth z in (0,1]. Projecting by x/z pushes them outward as
-// depth shrinks, which reads as travelling forward rather than drifting
-// sideways. Background first: slow, low contrast, no competition with text.
-(function () {
-  var canvas = document.getElementById("stars");
-  if (!canvas) return;
-  var ctx = canvas.getContext("2d");
-  if (!ctx) return;
-
-  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var SPEED = 0.041;
-  var stars = [], w = 0, h = 0, last = performance.now();
-
-  function spawn(s, depth) {
-    s.x = (Math.random() * 2 - 1) * 1.5;
-    s.y = (Math.random() * 2 - 1) * 1.5;
-    s.z = depth === undefined ? 1 : depth;
-    s.tint = Math.random();
-  }
-
-  function resize() {
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    w = window.innerWidth;
-    h = window.innerHeight;
-    canvas.width = Math.floor(w * dpr);
-    canvas.height = Math.floor(h * dpr);
-    canvas.style.width = w + "px";
-    canvas.style.height = h + "px";
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    var target = Math.min(520, Math.round((w * h) / 3200));
-    stars = [];
-    for (var i = 0; i < target; i++) {
-      var s = { x: 0, y: 0, z: 1, tint: 0 };
-      spawn(s, Math.random()); // stagger so the field starts full
-      stars.push(s);
-    }
-  }
-
-  function draw(dt) {
-    var cx = w / 2, cy = h / 2, scale = Math.min(w, h) * 0.5;
-    ctx.clearRect(0, 0, w, h);
-
-    for (var i = 0; i < stars.length; i++) {
-      var s = stars[i];
-      if (!reduce) {
-        s.z -= SPEED * dt;
-        if (s.z <= 0.02) { spawn(s); continue; }
-      }
-
-      var px = cx + (s.x / s.z) * scale;
-      var py = cy + (s.y / s.z) * scale;
-      if (px < -40 || px > w + 40 || py < -40 || py > h + 40) {
-        if (!reduce) spawn(s);
-        continue;
-      }
-
-      var near = 1 - s.z;
-      var r = 0.4 + near * near * 1.7;
-      var a = Math.min(0.7, 0.1 + near * near * 0.8);
-      ctx.fillStyle = s.tint > 0.82
-        ? "rgba(69, 224, 208, " + a + ")"
-        : "rgba(222, 236, 255, " + a + ")";
-      ctx.beginPath();
-      ctx.arc(px, py, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  function frame(now) {
-    // Clamp dt so a backgrounded tab does not teleport the field.
-    var dt = Math.min((now - last) / 1000, 0.05);
-    last = now;
-    draw(dt);
-    requestAnimationFrame(frame);
-  }
-
-  resize();
-  window.addEventListener("resize", resize);
-  if (reduce) { draw(0); } else { requestAnimationFrame(frame); }
-})();
-
 (function () {
   "use strict";
 
-  // --- sample catalogue -----------------------------------------------------
-  // Real titles, invented state. Nothing here is fetched.
-  var CATALOGUE = [
-    { n: "Severance",            y: "2022", t: "Series", tag: "S3 Friday", live: true },
-    { n: "The Bear",             y: "2022", t: "Series", tag: "S5 Friday", live: true },
-    { n: "Dune: Part Two",       y: "2024", t: "Film",   tag: "Streaming" },
-    { n: "Andor",                y: "2022", t: "Series", tag: "Ended" },
-    { n: "Fallout",              y: "2024", t: "Series", tag: "S2 airing" },
-    { n: "Shogun",               y: "2024", t: "Series", tag: "S2 filming" },
-    { n: "The Last of Us",       y: "2023", t: "Series", tag: "S3 2027" },
-    { n: "Silo",                 y: "2023", t: "Series", tag: "S3 soon" },
-    { n: "Poor Things",          y: "2023", t: "Film",   tag: "New on Max", live: true },
-    { n: "Arcane",               y: "2021", t: "Series", tag: "Ended" },
-    { n: "Blade Runner 2049",    y: "2017", t: "Film",   tag: "Streaming" },
-    { n: "House of the Dragon",  y: "2022", t: "Series", tag: "S3 2026" }
-  ];
+  /* ==================================================================== art */
+  /* Generated cover art, mirroring src/lib/poster.ts exactly: FNV-1a hash ->
+     duotone ground + one of six motifs. Same title always yields the same
+     plate, so a rail reads as composed rather than random. */
+
+  function hash(s) {
+    var h = 0x811c9dc5;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+    return h >>> 0;
+  }
+
+  function rng(seed) {
+    var s = seed || 1;
+    return function () { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 100000) / 100000; };
+  }
+
+  var MOTIFS = ["rings", "horizon", "bars", "orbit", "grid", "prism"];
+  var STOP = /^(the|a|an|of|and|part|in|on)$/i;
+
+  function initials(name) {
+    var w = name.replace(/[^A-Za-z0-9\s]/g, " ").split(/\s+/).filter(function (x) { return x && !STOP.test(x); });
+    if (!w.length) return name.slice(0, 2).toUpperCase();
+    if (w.length === 1) return w[0].slice(0, 2).toUpperCase();
+    return (w[0][0] + w[1][0]).toUpperCase();
+  }
+
+  function plate(name) {
+    var h = hash(name), base = h % 360;
+    var warm = base % 7 === 0;
+    var hue = warm ? 18 + (base * 11) % 34 : 188 + (base * 7) % 96;
+    var shift = 26 + ((h >>> 5) % 42);
+    return {
+      from: "hsl(" + hue + " " + (warm ? 58 : 64) + "% " + (18 + ((h >>> 3) % 9)) + "%)",
+      to: "hsl(" + ((hue + shift) % 360) + " 52% 7%)",
+      accent: "hsl(" + ((hue + 180) % 360) + " 70% 62%)",
+      angle: 130 + ((h >>> 8) % 70),
+      motif: MOTIFS[h % MOTIFS.length],
+      glyph: initials(name),
+      seed: h
+    };
+  }
+
+  function motif(p) {
+    var r = rng(p.seed), out = [], i, x;
+    if (p.motif === "rings") {
+      var cx = 60 + r() * 80, cy = 90 + r() * 70;
+      for (i = 0; i < 5; i++) out.push('<circle cx="'+cx+'" cy="'+cy+'" r="'+(18+i*17)+'" fill="none" stroke-width="'+(i===2?1.6:0.7)+'"/>');
+    } else if (p.motif === "horizon") {
+      var y = 120 + r() * 60, hcx = 50 + r() * 100;
+      out.push('<circle cx="'+hcx+'" cy="'+(y-26)+'" r="'+(34+r()*16)+'" fill="none" stroke-width="1.4"/>');
+      for (i = 0; i < 6; i++) out.push('<line x1="0" x2="200" y1="'+(y+i*9)+'" y2="'+(y+i*9)+'" stroke-width="0.6"/>');
+    } else if (p.motif === "bars") {
+      x = 14;
+      while (x < 186) {
+        var w = 2 + Math.round(r() * 9), bh = 70 + r() * 150;
+        out.push('<rect x="'+x+'" y="'+(300-bh-40)+'" width="'+w+'" height="'+bh+'" stroke-width="0"/>');
+        x += w + 4 + Math.round(r() * 7);
+      }
+    } else if (p.motif === "orbit") {
+      out.push('<circle cx="100" cy="130" r="52" fill="none" stroke-width="0.8"/>');
+      out.push('<circle cx="100" cy="130" r="84" fill="none" stroke-width="0.5"/>');
+      for (i = 0; i < 7; i++) {
+        var a = r() * Math.PI * 2, rad = i % 2 === 0 ? 52 : 84;
+        out.push('<circle cx="'+(100+Math.cos(a)*rad)+'" cy="'+(130+Math.sin(a)*rad)+'" r="'+(1.6+r()*3)+'" stroke-width="0"/>');
+      }
+    } else if (p.motif === "grid") {
+      var vx = 60 + r() * 80;
+      for (i = -3; i <= 9; i++) out.push('<line x1="'+(i*26)+'" y1="300" x2="'+vx+'" y2="96" stroke-width="0.55"/>');
+      for (i = 1; i < 8; i++) {
+        var gy = 96 + Math.pow(i, 1.9) * 3.4;
+        if (gy > 300) break;
+        out.push('<line x1="0" x2="200" y1="'+gy+'" y2="'+gy+'" stroke-width="0.55"/>');
+      }
+    } else {
+      var px = 40 + r() * 60;
+      out.push('<path d="M'+px+' 70 L'+(px+62)+' 178 L'+(px-62)+' 178 Z" fill="none" stroke-width="1.5"/>');
+      for (i = 0; i < 5; i++) out.push('<line x1="'+(px-58+i*3)+'" y1="178" x2="200" y2="'+(150+i*13)+'" stroke-width="0.8"/>');
+    }
+    return out.join("");
+  }
+
+  /* Scanlines as one tiled pattern rather than a hundred <line> elements —
+     at twenty cards a rail that difference is thousands of DOM nodes. */
+  function art(name) {
+    var p = plate(name), id = "p" + p.seed.toString(36);
+    return '<svg viewBox="0 0 200 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="' + esc(name) + '">' +
+      '<defs>' +
+        '<linearGradient id="'+id+'g" x1="0" y1="0" x2="1" y2="1" gradientTransform="rotate('+(p.angle-135)+' 0.5 0.5)">' +
+          '<stop offset="0%" stop-color="'+p.from+'"/><stop offset="100%" stop-color="'+p.to+'"/>' +
+        '</linearGradient>' +
+        '<linearGradient id="'+id+'f" x1="0" y1="0" x2="0" y2="1">' +
+          '<stop offset="55%" stop-color="rgba(0,0,0,0)"/><stop offset="100%" stop-color="rgba(0,0,0,0.72)"/>' +
+        '</linearGradient>' +
+        '<pattern id="'+id+'s" width="3" height="3" patternUnits="userSpaceOnUse"><rect width="3" height="1" fill="#000" opacity="0.18"/></pattern>' +
+      '</defs>' +
+      '<rect width="200" height="300" fill="url(#'+id+'g)"/>' +
+      '<g stroke="'+p.accent+'" fill="'+p.accent+'" opacity="0.34">' + motif(p) + '</g>' +
+      '<rect width="200" height="300" fill="url(#'+id+'f)"/>' +
+      '<rect width="200" height="300" fill="url(#'+id+'s)"/>' +
+      '<text x="14" y="282" fill="rgba(240,246,255,0.94)" font-size="15" font-weight="800" letter-spacing="0.5" style="font-family:Archivo,sans-serif">'+p.glyph+'</text>' +
+    '</svg>';
+  }
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  /* =================================================================== data */
+  /* Real titles, invented everything else. No release schedule here should be
+     read as a claim about a real one. */
 
   var SERVICES = ["Netflix", "Max", "Hulu", "Disney+", "Prime Video", "Apple TV+", "Peacock", "Paramount+"];
   var MINE = { "Max": 1, "Hulu": 1, "Apple TV+": 1 };
 
-  var RULES = [
-    { k: "season",    n: "A new season drops",        d: "Fires at the exact unlock time, not the next crawl.", on: true },
-    { k: "episode",   n: "Every new episode",         d: "Weekly, as each one airs.", on: false, optin: true },
-    { k: "franchise", n: "A sequel is announced",     d: "A new entry appears in the series, date or no date.", on: true },
-    { k: "service",   n: "It lands on my services",   d: "Only the ones you actually pay for.", on: true },
-    { k: "debut",     n: "It starts streaming at all", d: "First time it is streamable anywhere.", on: true }
+  function T(name, year, kind, genres, pop, svc, offer) {
+    return { name: name, year: year, kind: kind, genres: genres, pop: pop, svc: svc || null, offer: offer || "FLATRATE" };
+  }
+
+  var CATALOG = [
+    T("Severance", 2022, "TV", ["Science Fiction","Thriller","Drama"], 430, "Apple TV+"),
+    T("The Bear", 2022, "TV", ["Comedy","Drama"], 372, "Hulu"),
+    T("The Last of Us", 2023, "TV", ["Drama","Horror"], 396, "Max"),
+    T("Fallout", 2024, "TV", ["Science Fiction","Adventure"], 362, "Prime Video"),
+    T("Stranger Things", 2016, "TV", ["Science Fiction","Horror"], 388, "Netflix"),
+    T("Squid Game", 2021, "TV", ["Thriller","Drama"], 366, "Netflix"),
+    T("House of the Dragon", 2022, "TV", ["Fantasy","Drama"], 358, "Max"),
+    T("The Boys", 2019, "TV", ["Action","Comedy"], 344, "Prime Video"),
+    T("The White Lotus", 2021, "TV", ["Comedy","Drama"], 340, "Max"),
+    T("The Penguin", 2024, "TV", ["Crime","Drama"], 334, "Max"),
+    T("Wednesday", 2022, "TV", ["Comedy","Fantasy"], 330, "Netflix"),
+    T("Shogun", 2024, "TV", ["Drama","History"], 318, "Hulu"),
+    T("Andor", 2022, "TV", ["Science Fiction","Drama"], 310, "Disney+"),
+    T("The Mandalorian", 2019, "TV", ["Science Fiction","Adventure"], 306, "Disney+"),
+    T("Arcane", 2021, "TV", ["Animation","Fantasy"], 298, "Netflix"),
+    T("3 Body Problem", 2024, "TV", ["Science Fiction","Mystery"], 294, "Netflix"),
+    T("Loki", 2021, "TV", ["Science Fiction","Fantasy"], 292, "Disney+"),
+    T("Only Murders in the Building", 2021, "TV", ["Comedy","Mystery"], 288, "Hulu"),
+    T("Silo", 2023, "TV", ["Science Fiction","Mystery"], 286, "Apple TV+"),
+    T("Slow Horses", 2022, "TV", ["Drama","Thriller"], 238, "Apple TV+"),
+    T("Foundation", 2021, "TV", ["Science Fiction","Drama"], 242, "Apple TV+"),
+    T("Baby Reindeer", 2024, "TV", ["Drama","Comedy"], 252, "Netflix"),
+    T("Ripley", 2024, "TV", ["Drama","Thriller"], 216, "Netflix"),
+    T("Yellowjackets", 2021, "TV", ["Drama","Horror"], 224, "Paramount+"),
+
+    T("Dune: Part Two", 2024, "Film", ["Science Fiction","Adventure"], 420, "Max"),
+    T("Sinners", 2025, "Film", ["Horror","Thriller"], 410, null),
+    T("Oppenheimer", 2023, "Film", ["Drama","History"], 385, "Peacock"),
+    T("Barbie", 2023, "Film", ["Comedy","Adventure"], 368, "Max"),
+    T("Wicked", 2024, "Film", ["Musical","Fantasy"], 356, "Peacock"),
+    T("Spider-Man: Across the Spider-Verse", 2023, "Film", ["Animation","Action"], 348, "Netflix"),
+    T("Mickey 17", 2025, "Film", ["Science Fiction","Comedy"], 344, null),
+    T("Top Gun: Maverick", 2022, "Film", ["Action","Drama"], 340, "Paramount+"),
+    T("Dune", 2021, "Film", ["Science Fiction","Adventure"], 330, "Max"),
+    T("John Wick: Chapter 4", 2023, "Film", ["Action","Crime"], 326, "Peacock"),
+    T("The Substance", 2024, "Film", ["Horror","Science Fiction"], 322, "Max", "RENT"),
+    T("The Batman", 2022, "Film", ["Crime","Mystery"], 316, "Max"),
+    T("Interstellar", 2014, "Film", ["Science Fiction","Drama"], 312, "Paramount+"),
+    T("Everything Everywhere All at Once", 2022, "Film", ["Science Fiction","Comedy"], 302, "Prime Video"),
+    T("The Matrix", 1999, "Film", ["Science Fiction","Action"], 282, "Max"),
+    T("Poor Things", 2023, "Film", ["Comedy","Drama"], 288, "Hulu"),
+    T("Furiosa", 2024, "Film", ["Action","Adventure"], 284, "Max"),
+    T("Blade Runner 2049", 2017, "Film", ["Science Fiction","Drama"], 260, "Netflix"),
+    T("Parasite", 2019, "Film", ["Thriller","Drama"], 275, "Hulu"),
+    T("Nosferatu", 2024, "Film", ["Horror","Drama"], 298, "Peacock"),
+    T("Anora", 2024, "Film", ["Comedy","Drama"], 262, "Hulu"),
+    T("Challengers", 2024, "Film", ["Drama","Romance"], 244, "Prime Video"),
+    T("Civil War", 2024, "Film", ["Action","Thriller"], 256, "Max"),
+    T("Longlegs", 2024, "Film", ["Horror","Crime"], 206, "Hulu"),
+    T("Hereditary", 2018, "Film", ["Horror","Drama"], 214, "Max"),
+    T("Get Out", 2017, "Film", ["Horror","Thriller"], 231, "Peacock"),
+    T("Knives Out", 2019, "Film", ["Mystery","Comedy"], 254, "Netflix"),
+    T("Glass Onion", 2022, "Film", ["Mystery","Comedy"], 248, "Netflix"),
+    T("Arrival", 2016, "Film", ["Science Fiction","Drama"], 245, "Paramount+"),
+    T("La La Land", 2016, "Film", ["Musical","Romance"], 240, "Netflix"),
+    T("Whiplash", 2014, "Film", ["Drama","Musical"], 226, "Prime Video"),
+    T("Past Lives", 2023, "Film", ["Romance","Drama"], 186, "Max"),
+    T("The Holdovers", 2023, "Film", ["Comedy","Drama"], 195, "Peacock"),
+    T("Inside Out 2", 2024, "Film", ["Animation","Comedy"], 278, "Disney+"),
+    T("The Wild Robot", 2024, "Film", ["Animation","Science Fiction"], 256, "Peacock"),
+    T("Deadpool & Wolverine", 2024, "Film", ["Action","Comedy"], 296, "Disney+"),
+    T("Gladiator II", 2024, "Film", ["Action","Drama"], 248, "Paramount+"),
+
+    T("Dune: Part Three", 2027, "Film", ["Science Fiction","Adventure"], 412, null),
+    T("Avatar: Fire and Ash", 2026, "Film", ["Science Fiction","Adventure"], 468, null),
+    T("Avengers: Doomsday", 2026, "Film", ["Action","Science Fiction"], 452, null),
+    T("The Odyssey", 2027, "Film", ["Adventure","Drama"], 402, null),
+    T("Project Hail Mary", 2026, "Film", ["Science Fiction","Drama"], 376, null),
+    T("The Mandalorian and Grogu", 2026, "Film", ["Science Fiction","Adventure"], 344, null),
+    T("Shrek 5", 2027, "Film", ["Animation","Comedy"], 318, null),
+    T("Supergirl", 2026, "Film", ["Action","Adventure"], 286, null)
   ];
 
-  var SEARCH = [
-    { n: "Dune: Part Two",  y: "2024 · Film",              g: "DT", note: "Streaming on Max" },
-    { n: "Dune: Messiah",   y: "Announced · Film",         g: "DM", note: "No release date yet", followed: true },
-    { n: "Dune",            y: "2021 · Film",              g: "DU", note: "Streaming on Max" },
-    { n: "Dune: Prophecy",  y: "2024 · Series",            g: "DP", note: "Season 2 filming" }
+  var byName = {};
+  CATALOG.forEach(function (t) { byName[t.name] = t; });
+
+  function pick(fn, n) { return CATALOG.filter(fn).slice(0, n || 20); }
+  function byPop(a, b) { return b.pop - a.pop; }
+
+  var UPCOMING = CATALOG.filter(function (t) { return t.year >= 2026; });
+  var RAILS = [
+    { h: "Dropping this week", note: "Already armed — you will get the text", feature: true,
+      items: ["Severance","The Bear","Only Murders in the Building","Stranger Things","Silo"].map(function (n) { return byName[n]; }) },
+    { h: "Landed in the last day", note: "New to streaming",
+      items: CATALOG.filter(function (t) { return t.svc && t.year >= 2023; }).slice(0, 18) },
+    { h: "Popular on Max", note: "Included with what you already pay for",
+      items: CATALOG.filter(function (t) { return t.svc === "Max" && t.offer === "FLATRATE"; }) },
+    { h: "Popular shows right now",
+      items: CATALOG.filter(function (t) { return t.kind === "TV"; }).sort(byPop).slice(0, 20) },
+    { h: "New movie releases",
+      items: CATALOG.filter(function (t) { return t.kind === "Film" && t.year >= 2023 && t.year <= 2025; }).sort(byPop).slice(0, 20) },
+    { h: "Climbing fast", note: "Biggest jump since our last check",
+      items: CATALOG.slice().sort(byPop).slice(2, 22) },
+    { h: "Upcoming blockbusters", note: "Not out yet — follow now, hear first", feature: true, items: UPCOMING },
+    { h: "Not streaming anywhere yet", note: "The ones worth waiting for",
+      items: CATALOG.filter(function (t) { return !t.svc; }) },
+    { h: "Science fiction", items: CATALOG.filter(function (t) { return t.genres.indexOf("Science Fiction") >= 0; }).sort(byPop) },
+    { h: "Horror", items: CATALOG.filter(function (t) { return t.genres.indexOf("Horror") >= 0; }).sort(byPop) },
+    { h: "Comedy", items: CATALOG.filter(function (t) { return t.genres.indexOf("Comedy") >= 0; }).sort(byPop) }
+  ].filter(function (r) { return r.items.length >= 4; });
+
+  var SIGNALS = [
+    { t: "A new season drops", d: "Premiere dates are published weeks ahead, so this fires on a timer at the exact unlock.",
+      i: '<path d="M3 7h18"/><path d="M5 12h14"/><path d="M7 17h10"/>' },
+    { t: "Every new episode", d: "Every week, as it airs. Worth it for the one or two shows you are mid-watch on.", optIn: true,
+      i: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="2.6"/>' },
+    { t: "A sequel is announced", d: "A new entry appears in the franchise, often long before anyone announces a date.",
+      i: '<circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="12" r="2.2"/><path d="M8 7.5l8 3.2M8 16.5l8-3.2"/>' },
+    { t: "It lands on your service", d: "Included with the subscription — not a rental dressed up as availability.",
+      i: '<path d="M3 5h12v14H3z"/><path d="M21 12h-8"/><path d="M16 8l5 4-5 4"/>' },
+    { t: "It finally starts streaming", d: "You saw the trailer eight months ago. It has never streamed anywhere. Now it has.",
+      i: '<path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.2"/>' }
   ];
 
-  // Deterministic plate colours: same title, same look, every time.
-  function hash(s) {
-    var h = 0x811c9dc5, i;
-    for (i = 0; i < s.length; i++) {
-      h ^= s.charCodeAt(i);
-      h = Math.imul(h, 0x01000193);
-    }
-    return h >>> 0;
+  /* ================================================================ helpers */
+
+  function plateHTML(t, tag, big) {
+    return '<button class="plate' + (big ? " lg" : "") + '" data-title="' + esc(t.name) + '">' +
+      '<div class="plate-art">' + art(t.name) +
+        (tag ? '<span class="plate-tag' + (tag.live ? " live" : "") + '">' + esc(tag.text) + '</span>' : '') +
+      '</div>' +
+      '<div class="plate-name">' + esc(t.name) + '</div>' +
+      '<div class="plate-sub">' + t.year + ' · ' + (t.kind === "TV" ? "Series" : "Film") + '</div>' +
+    '</button>';
   }
 
-  function plate(name) {
-    var h = hash(name);
-    var base = h % 360;
-    var hue = (base % 9 === 0) ? (24 + (base * 11) % 26) : (190 + (base * 7) % 90);
-    return {
-      bg: "linear-gradient(" + (135 + (h >>> 8) % 60) + "deg, hsl(" + hue + " 62% 22%), hsl(" + ((hue + 38) % 360) + " 55% 9%))",
-      glyph: initials(name)
-    };
+  function railHTML(row) {
+    return '<section class="sec"><div class="sec-head"><h2>' + esc(row.h) + '</h2>' +
+      (row.note ? '<span class="sec-note">' + esc(row.note) + '</span>' : '') + '</div>' +
+      '<div class="rail">' + row.items.map(function (t) {
+        var tag = null;
+        if (!t.svc) tag = { text: "Not out yet", live: true };
+        else if (row.h === "Dropping this week") tag = { text: "Armed", live: false };
+        return plateHTML(t, tag, row.feature);
+      }).join("") + '</div></section>';
   }
 
-  function initials(name) {
-    var words = name.replace(/[^A-Za-z0-9\s]/g, " ").split(/\s+/).filter(function (w) {
-      return w.length && !/^(the|a|an|of|and|part)$/i.test(w);
+  function nextFriday() {
+    var d = new Date(); d.setHours(0, 0, 0, 0);
+    var delta = (5 - d.getDay() + 7) % 7; if (delta === 0) delta = 7;
+    d.setDate(d.getDate() + delta); return d;
+  }
+  var TARGET = nextFriday();
+  function pad(n) { return String(n).padStart(2, "0"); }
+
+  /* =============================================================== discover */
+
+  function renderDiscover() {
+    var el = document.getElementById("page-discover");
+    el.innerHTML =
+      '<div class="search-wrap">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' +
+        '<label for="q" style="position:absolute;left:-9999px">Search</label>' +
+        '<input id="q" type="search" placeholder="Search anything — including films that are not out yet" autocomplete="off">' +
+      '</div>' +
+      '<div id="results"></div>' +
+      '<div id="browse">' +
+      '<section class="hero">' +
+        '<div>' +
+          '<div class="readout">Release monitoring · United States</div>' +
+          '<h1 style="margin-top:22px">You already know what you want to watch. <em>We watch for it.</em></h1>' +
+          '<p class="hero-sub">Follow a show or a film once. When the next season lands, when the sequel gets announced, or when it finally turns up on a service you already pay for — your phone buzzes.</p>' +
+          '<div class="hero-cta">' +
+            '<button class="btn btn-primary" data-goto="taste">Find me a film</button>' +
+            '<button class="btn btn-ghost" data-goto="following">See what is armed</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="counter">' +
+          '<div class="counter-head"><span class="pulse"><i></i>Armed</span><span class="readout">Next drop</span></div>' +
+          '<div class="counter-title">Severance — Season 3</div>' +
+          '<div class="counter-meta">Apple TV+ · S03E01</div>' +
+          '<div class="clock">' +
+            '<div class="clock-cell"><div class="clock-val" id="c-d">--</div><div class="clock-lab">Days</div></div>' +
+            '<div class="clock-cell"><div class="clock-val" id="c-h">--</div><div class="clock-lab">Hrs</div></div>' +
+            '<div class="clock-cell"><div class="clock-val" id="c-m">--</div><div class="clock-lab">Min</div></div>' +
+            '<div class="clock-cell"><div class="clock-val" id="c-s">--</div><div class="clock-lab">Sec</div></div>' +
+          '</div>' +
+          '<div class="counter-foot"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>Text goes out the second it unlocks — not the next morning.</div>' +
+        '</div>' +
+      '</section>' +
+      RAILS.map(railHTML).join("") +
+      '<section class="sec panel pad">' +
+        '<div class="readout">Cannot decide?</div>' +
+        '<h2 style="margin-top:12px;font-size:1.5rem">Rate a few films and we will find you one.</h2>' +
+        '<p class="prose" style="margin-top:12px">Fifteen free ratings, with a suggestion after every five. Saying you have not seen something is free and does not count against them.</p>' +
+        '<button class="btn btn-primary" style="margin-top:18px" data-goto="taste">Find me something to watch</button>' +
+      '</section>' +
+      '<section class="sec">' +
+        '<div class="sec-head"><h2>Five different things worth knowing</h2><span class="sec-note">Switch each on per title</span></div>' +
+        '<div class="signals">' + SIGNALS.map(function (s) {
+          return '<div class="signal">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + s.i + '</svg>' +
+            '<h3>' + esc(s.t) + '</h3><p>' + esc(s.d) + '</p>' +
+            (s.optIn ? '<span class="signal-flag">Off by default</span>' : '') + '</div>';
+        }).join("") + '</div>' +
+      '</section>' +
+      '<div class="foot"><span>Streaming availability via TMDB / JustWatch · Episode timing via TVmaze</span><span>Sample data — nothing here is wired up</span></div>' +
+      '</div>';
+
+    var q = document.getElementById("q");
+    q.addEventListener("input", function () {
+      var term = q.value.trim().toLowerCase();
+      var results = document.getElementById("results");
+      var browse = document.getElementById("browse");
+      if (term.length < 2) { results.innerHTML = ""; browse.hidden = false; return; }
+      browse.hidden = true;
+      var hits = CATALOG.filter(function (t) { return t.name.toLowerCase().indexOf(term) >= 0; });
+      results.innerHTML = '<section class="sec"><div class="sec-head"><h2>' + hits.length +
+        (hits.length === 1 ? " result" : " results") + ' for “' + esc(q.value) + '”</h2></div>' +
+        (hits.length ? '<div class="grid-titles">' + hits.map(function (t) {
+          return plateHTML(t, t.svc ? null : { text: "Not out yet", live: true });
+        }).join("") + '</div>'
+        : '<p class="prose">Nothing matched. Try fewer words, or the original title if it was renamed for release.</p>') +
+        '</section>';
     });
-    if (!words.length) return name.slice(0, 2).toUpperCase();
-    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-    return (words[0][0] + words[1][0]).toUpperCase();
   }
 
-  function el(tag, cls, text) {
-    var e = document.createElement(tag);
-    if (cls) e.className = cls;
-    if (text != null) e.textContent = text;
-    return e;
-  }
+  /* ============================================================== following */
 
-  // --- title grids ----------------------------------------------------------
-  function renderGrid(target, items) {
-    var host = document.getElementById(target);
-    if (!host) return;
-    host.textContent = "";
-    items.forEach(function (item) {
-      var p = plate(item.n);
-      var btn = el("button", "plate");
-      btn.type = "button";
-      btn.setAttribute("data-goto", "title");
+  function renderFollowing() {
+    var follows = ["Severance","The Bear","Fallout","Silo","Dune: Part Three","The Last of Us","Andor","Poor Things","Dune: Part Two"].map(function (n) { return byName[n]; });
 
-      var art = el("div", "plate-art");
-      art.style.background = p.bg;
-      if (item.tag) {
-        var tag = el("span", "plate-tag" + (item.live ? " is-live" : ""), item.tag);
-        art.appendChild(tag);
-      }
-      art.appendChild(el("span", "plate-glyph", p.glyph));
+    var queue = [
+      { day: "Friday", time: "00:00", name: "Severance — S03E01", sub: "Apple TV+ · A new season drops" },
+      { day: "Friday", time: "03:01", name: "The Bear — S05E01", sub: "Hulu · A new season drops" },
+      { day: "Next Tuesday", time: "00:00", name: "Fallout — S02E04", sub: "Prime Video · Every new episode" },
+      { day: "Next Tuesday", time: "00:00", name: "Only Murders in the Building — S06E01", sub: "Hulu · A new season drops" },
+      { day: "In three weeks", time: "00:00", name: "Silo — S03E01", sub: "Apple TV+ · A new season drops" }
+    ];
 
-      btn.appendChild(art);
-      btn.appendChild(el("div", "plate-name", item.n));
-      btn.appendChild(el("div", "plate-sub", item.y + " · " + item.t));
-      host.appendChild(btn);
-    });
-  }
+    var days = [], seen = {};
+    queue.forEach(function (q) { if (!seen[q.day]) { seen[q.day] = []; days.push(q.day); } seen[q.day].push(q); });
 
-  renderGrid("trending", CATALOGUE);
-  renderGrid("following", CATALOGUE.slice(0, 9));
+    document.getElementById("page-following").innerHTML =
+      '<div class="sec-head" style="margin-top:34px">' +
+        '<div><div class="readout">Your account</div><h1 style="margin-top:12px;font-size:1.8rem">Following</h1></div>' +
+        '<span class="sec-note" style="font-family:var(--mono)">9 tracked · 5 armed</span>' +
+      '</div>' +
+      '<section class="sec" style="margin-top:20px">' +
+        '<div class="sec-head"><h2>What is coming</h2><span class="sec-note">Alerts already armed</span></div>' +
+        '<div class="queue">' + days.map(function (d) {
+          return '<div class="queue-day">' + esc(d) + '</div>' + seen[d].map(function (q) {
+            return '<div class="queue-row"><div class="queue-time">' + q.time + '</div>' +
+              '<div><div class="queue-name" data-title="' + esc(q.name.split(" — ")[0]) + '">' + esc(q.name) + '</div>' +
+              '<div class="queue-sub">' + esc(q.sub) + '</div></div>' +
+              '<span class="chip-armed">Armed</span></div>';
+          }).join("");
+        }).join("") + '</div>' +
+      '</section>' +
+      '<section class="sec">' +
+        '<div class="sec-head"><h2>Everything you follow</h2></div>' +
+        '<div class="grid-titles">' + follows.map(function (t) { return plateHTML(t); }).join("") + '</div>' +
+      '</section>' +
+      '<section class="sec" style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">' +
+        '<div class="panel pad">' +
+          '<div class="readout">Services you pay for</div>' +
+          '<p class="prose" style="font-size:13.5px;margin:10px 0 0">This is what makes “it landed on a service you have” mean anything.</p>' +
+          '<div class="chip-row" id="svc"></div>' +
+        '</div>' +
+        '<div class="panel pad">' +
+          '<div class="readout">How we reach you</div>' +
+          '<dl class="meta">' +
+            '<div><dt>Email</dt><dd>demo@tvwatcher.local</dd></div>' +
+            '<div><dt>Text message</dt><dd style="color:var(--live)">Awaiting carrier approval</dd></div>' +
+          '</dl>' +
+          '<p class="fine" style="margin-top:14px">US texting needs A2P 10DLC registration, which takes about a week to clear. Until it does, alerts go by email. Reply STOP any time to end them.</p>' +
+        '</div>' +
+      '</section>';
 
-  // --- service chips --------------------------------------------------------
-  var chipHost = document.getElementById("svc-chips");
-  if (chipHost) {
+    var host = document.getElementById("svc");
     SERVICES.forEach(function (name) {
-      var c = el("button", "chip", name);
-      c.type = "button";
+      var c = document.createElement("button");
+      c.className = "chip"; c.type = "button"; c.textContent = name;
       c.setAttribute("aria-pressed", MINE[name] ? "true" : "false");
       c.addEventListener("click", function () {
-        var on = c.getAttribute("aria-pressed") === "true";
-        c.setAttribute("aria-pressed", on ? "false" : "true");
+        c.setAttribute("aria-pressed", c.getAttribute("aria-pressed") === "true" ? "false" : "true");
       });
-      chipHost.appendChild(c);
+      host.appendChild(c);
     });
   }
 
-  // --- offer-type chips -----------------------------------------------------
-  var offerHost = document.getElementById("offer-chips");
-  if (offerHost) {
-    [["Included", true], ["Free with ads", false], ["Rent", false], ["Buy", false]].forEach(function (pair) {
-      var c = el("button", "chip", pair[0]);
-      c.type = "button";
-      c.setAttribute("aria-pressed", pair[1] ? "true" : "false");
-      c.addEventListener("click", function () {
-        var on = c.getAttribute("aria-pressed") === "true";
-        c.setAttribute("aria-pressed", on ? "false" : "true");
+  /* ================================================================== taste */
+
+  var FREE_LIMIT = 15, INTERVAL = 5;
+  var taste = { started: false, counted: 0, deck: [], index: 0, prefs: {}, loved: [], shownSuggestion: null, dismissed: {} };
+
+  /* Mirrors src/lib/taste.ts: three buckets — informative, aligned, wildcard.
+     The wildcard is the point, not a concession: without it the model
+     converges on its own first guess and never recovers. */
+  function buildDeck() {
+    var rated = {};
+    taste.deck.slice(0, taste.index).forEach(function (t) { rated[t.name] = 1; });
+
+    var pool = CATALOG.filter(function (t) {
+      return t.kind === "Film" && t.year <= 2025 && !rated[t.name];
+    });
+
+    function reach(t) { return Math.log(t.pop + 10) / Math.LN10; }
+    function affinity(t) {
+      var known = t.genres.map(function (g) { return taste.prefs[g]; }).filter(function (w) { return w !== undefined; });
+      if (!known.length) return 0;
+      return known.reduce(function (a, b) { return a + b; }, 0) / known.length;
+    }
+
+    function sample(weights, n) {
+      var p = weights.filter(function (w) { return w.weight > 0; }).slice(), out = [];
+      while (out.length < n && p.length) {
+        var total = p.reduce(function (s, i) { return s + i.weight; }, 0);
+        var target = Math.random() * total, i = 0;
+        for (; i < p.length - 1; i++) { target -= p[i].weight; if (target <= 0) break; }
+        out.push(p[i].item); p.splice(i, 1);
+      }
+      return out;
+    }
+
+    var used = {}, chosen = [];
+    function draw(weights, n) {
+      sample(weights.filter(function (w) { return !used[w.item.name]; }), n).forEach(function (t) {
+        if (used[t.name]) return; used[t.name] = 1; chosen.push(t);
       });
-      offerHost.appendChild(c);
+    }
+
+    draw(pool.map(function (t) {
+      var unknown = t.genres.filter(function (g) { return taste.prefs[g] === undefined; }).length;
+      return { item: t, weight: (unknown * 2 + 0.4) * reach(t) };
+    }), 9);
+
+    draw(pool.map(function (t) {
+      var a = affinity(t);
+      return { item: t, weight: a > 0 ? (a + 0.05) * 6 * reach(t) : 0 };
+    }), 5);
+
+    draw(pool.map(function (t) {
+      var a = affinity(t);
+      return { item: t, weight: reach(t) * (a < 0 ? 0.35 : 1) };
+    }), 4);
+
+    return chosen.sort(function () { return Math.random() - 0.5; });
+  }
+
+  var WEIGHTS = { LOVED: 2, LIKED: 1, DISLIKED: -1.2, HATED: -2.5 };
+
+  function record(title, verdict) {
+    if (verdict === "NOT_SEEN") return;
+    taste.counted++;
+    if (verdict === "LOVED") taste.loved.push(title);
+    var w = WEIGHTS[verdict];
+    title.genres.forEach(function (g) {
+      var cur = taste.prefs[g] || 0;
+      taste.prefs[g] = Math.max(-1, Math.min(1, cur + w * 0.18));
     });
   }
 
-  // --- alert rules ----------------------------------------------------------
-  var ruleHost = document.getElementById("rules");
-  if (ruleHost) {
-    RULES.forEach(function (r) {
-      var row = el("div", "rule");
-
-      var left = el("div");
-      var name = el("div", "rule-name");
-      name.appendChild(document.createTextNode(r.n));
-      if (r.optin) name.appendChild(el("span", "rule-optin", "Off by default"));
-      left.appendChild(name);
-      left.appendChild(el("div", "rule-desc", r.d));
-
-      var sw = el("button", "sw");
-      sw.type = "button";
-      sw.setAttribute("role", "switch");
-      sw.setAttribute("aria-checked", r.on ? "true" : "false");
-      sw.setAttribute("aria-label", r.n);
-      sw.addEventListener("click", function () {
-        var on = sw.getAttribute("aria-checked") === "true";
-        sw.setAttribute("aria-checked", on ? "false" : "true");
-      });
-
-      row.appendChild(left);
-      row.appendChild(sw);
-      ruleHost.appendChild(row);
+  function suggest() {
+    var rated = {}, i;
+    for (i = 0; i < taste.index; i++) rated[taste.deck[i].name] = 1;
+    var best = null, bestScore = -Infinity;
+    CATALOG.forEach(function (t) {
+      if (t.kind !== "Film" || rated[t.name] || taste.dismissed[t.name] || t.year > 2025) return;
+      var known = t.genres.map(function (g) { return taste.prefs[g]; }).filter(function (w) { return w !== undefined; });
+      var score = known.length ? known.reduce(function (a, b) { return a + b; }, 0) / known.length : 0;
+      score += (t.pop / 2000);
+      if (score > bestScore) { bestScore = score; best = t; }
     });
-  }
+    if (!best) return null;
 
-  // --- search results -------------------------------------------------------
-  var resHost = document.getElementById("results");
-  if (resHost) {
-    SEARCH.forEach(function (s) {
-      var p = plate(s.n);
-      var row = el("div", "result");
-
-      var art = el("div", "result-art", p.glyph);
-      art.style.background = p.bg;
-
-      var mid = el("div");
-      mid.appendChild(el("div", "result-name", s.n));
-      mid.appendChild(el("div", "result-meta", s.y + " · " + s.note));
-
-      var b = el("button", "btn-follow", s.followed ? "Following" : "Follow");
-      b.type = "button";
-      b.setAttribute("aria-pressed", s.followed ? "true" : "false");
-      b.addEventListener("click", function () {
-        var on = b.getAttribute("aria-pressed") === "true";
-        b.setAttribute("aria-pressed", on ? "false" : "true");
-        b.textContent = on ? "Follow" : "Following";
-      });
-
-      row.appendChild(art);
-      row.appendChild(mid);
-      row.appendChild(b);
-      resHost.appendChild(row);
+    var top = null, topW = -Infinity;
+    best.genres.forEach(function (g) {
+      var w = taste.prefs[g] || 0;
+      if (w > topW) { topW = w; top = g; }
     });
-  }
-
-  // --- countdown ------------------------------------------------------------
-  // Next Friday at 00:00 local, so the label and the clock always agree.
-  function nextFriday() {
-    var d = new Date();
-    d.setHours(0, 0, 0, 0);
-    var delta = (5 - d.getDay() + 7) % 7;
-    if (delta === 0) delta = 7;
-    d.setDate(d.getDate() + delta);
-    return d;
-  }
-
-  var target = nextFriday();
-  var pad = function (n) { return String(n).padStart(2, "0"); };
-
-  function tick() {
-    var ms = Math.max(0, target - new Date());
-    var s = Math.floor(ms / 1000);
-    var d = Math.floor(s / 86400);
-    var h = Math.floor((s % 86400) / 3600);
-    var m = Math.floor((s % 3600) / 60);
-    var sec = s % 60;
-
-    var set = function (id, v) {
-      var node = document.getElementById(id);
-      if (node) node.textContent = v;
+    var witness = null;
+    for (i = 0; i < taste.loved.length; i++) {
+      if (taste.loved[i].genres.indexOf(top) >= 0) { witness = taste.loved[i]; break; }
+    }
+    return {
+      title: best,
+      reason: topW > 0.12 ? (witness ? top + " — like " + witness.name : "Strong " + top.toLowerCase() + " match")
+                          : "Well reviewed and close to your picks"
     };
-    set("c-d", pad(d));
-    set("c-h", pad(h));
-    set("c-m", pad(m));
-    set("c-s", pad(sec));
-
-    var eta = document.getElementById("title-eta");
-    if (eta) eta.textContent = d + "d " + pad(h) + "h";
   }
 
-  tick();
-  setInterval(tick, 1000);
+  function renderTaste() {
+    var el = document.getElementById("page-taste");
 
-  // --- screen switching -----------------------------------------------------
+    if (!taste.started) {
+      el.innerHTML =
+        '<div style="max-width:620px;margin-top:40px">' +
+          '<div class="readout">Taste calibration</div>' +
+          '<h1 style="margin-top:20px;font-size:clamp(2rem,5vw,3rem)">Can\'t find a good movie to watch?</h1>' +
+          '<p class="prose" style="margin-top:20px;font-size:15.5px">We are going to show you one film at a time. For each one, say whether you loved it, liked it, disliked it, hated it, or have not seen it.</p>' +
+          '<p class="prose" style="margin-top:16px;font-size:15.5px">You get <strong style="color:var(--ink)">15 free ratings</strong>, and a suggestion after every 5 — three in total. Saying you have not seen something is free and does not count against them; it still helps, because it tells us where to stop asking.</p>' +
+          '<div class="panel pad" style="margin-top:26px">' +
+            '<div class="readout">What you get</div>' +
+            '<ul style="margin:12px 0 0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:10px;color:var(--ink-dim);font-size:14px">' +
+              '<li><span style="color:var(--signal)">—</span> Films picked from what you actually rated, not what you once said you liked.</li>' +
+              '<li><span style="color:var(--signal)">—</span> Each one says why it is there, so you can disagree with the reasoning.</li>' +
+              '<li><span style="color:var(--signal)">—</span> Where it is streaming, and whether that is included with a service you pay for.</li>' +
+            '</ul>' +
+          '</div>' +
+          '<p class="fine" style="margin-top:18px">Films only for now. Television has a different shape — you can love four seasons and hate the fifth, and one verdict cannot carry that.</p>' +
+          '<button class="btn btn-primary" id="start-rating" style="margin-top:26px;padding:13px 26px">Start rating</button>' +
+        '</div>';
+      document.getElementById("start-rating").addEventListener("click", function () {
+        taste.started = true; taste.deck = buildDeck(); renderTaste();
+      });
+      return;
+    }
+
+    var header = '<div style="margin-top:34px;margin-bottom:22px"><div class="readout">Taste calibration</div>' +
+      '<h1 style="margin-top:12px;font-size:1.5rem">Can\'t find a good movie to watch?</h1></div>';
+
+    /* Paywall once the free allowance is spent. */
+    if (taste.counted >= FREE_LIMIT && !taste.shownSuggestion) {
+      el.innerHTML = header +
+        '<div class="panel pad" style="max-width:760px;text-align:center">' +
+          '<div class="readout" style="color:var(--live)">Free allowance used</div>' +
+          '<h2 style="margin:16px auto 0;max-width:20ch;font-size:clamp(1.5rem,4vw,2rem)">You\'ve rated ' + taste.counted + ' films and had three suggestions.</h2>' +
+          '<p class="prose" style="margin:16px auto 0">Keep going and the picks get sharper — the model has enough to know roughly what you like, and a few dozen more verdicts is where it starts surprising you.</p>' +
+          '<div style="max-width:380px;margin:24px auto 0;display:flex;flex-direction:column;gap:8px">' +
+            '<button class="btn btn-primary">Unlock unlimited ratings</button>' +
+            '<button class="btn btn-ghost" id="restart">Start over</button>' +
+          '</div>' +
+          '<p class="fine" style="margin-top:20px">Payment is not wired up yet — this button does nothing today.</p>' +
+        '</div>';
+      document.getElementById("restart").addEventListener("click", function () {
+        taste = { started: true, counted: 0, deck: [], index: 0, prefs: {}, loved: [], shownSuggestion: null, dismissed: {} };
+        taste.deck = buildDeck(); renderTaste();
+      });
+      return;
+    }
+
+    /* Milestone suggestion. */
+    if (taste.shownSuggestion) {
+      var s = taste.shownSuggestion;
+      var remaining = Math.max(0, FREE_LIMIT - taste.counted);
+      el.innerHTML = header +
+        '<div class="panel" style="max-width:760px;overflow:hidden">' +
+          '<div style="border-bottom:1px solid var(--line);background:var(--panel-2);padding:12px 20px">' +
+            '<div class="readout" style="color:var(--signal)">Based on your ' + taste.counted + ' choices</div>' +
+          '</div>' +
+          '<div style="display:grid;gap:20px;padding:22px;grid-template-columns:170px minmax(0,1fr)" class="sugg-body">' +
+            '<div class="plate-art" style="height:fit-content">' + art(s.title.name) + '</div>' +
+            '<div>' +
+              '<p style="margin:0;color:var(--ink-dim);font-size:14px">We think you\'d like</p>' +
+              '<h2 style="margin-top:6px;font-size:clamp(1.4rem,4vw,2rem)">' + esc(s.title.name) + '</h2>' +
+              '<div style="margin-top:6px;font-family:var(--mono);font-size:11.5px;color:var(--ink-faint)">' + s.title.year + '</div>' +
+              '<div style="margin-top:12px"><span class="reason">' + esc(s.reason) + '</span></div>' +
+              '<div style="margin-top:12px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim)">' +
+                (s.title.svc ? esc(s.title.svc) : "Not streaming yet") + '</div>' +
+              '<div style="margin-top:24px;display:flex;gap:8px;flex-wrap:wrap">' +
+                '<button class="btn btn-primary" id="keep">' + (remaining > 0 ? "Keep rating" : "Done for now") + '</button>' +
+                '<button class="btn btn-ghost" id="seen">I\'ve seen that before</button>' +
+              '</div>' +
+              '<p class="fine" style="margin-top:16px">' +
+                (remaining > 0 ? remaining + " free " + (remaining === 1 ? "rating" : "ratings") + " left." : "That was your last free rating.") +
+              '</p>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      document.getElementById("keep").addEventListener("click", function () {
+        taste.shownSuggestion = null; renderTaste();
+      });
+      document.getElementById("seen").addEventListener("click", function () {
+        taste.dismissed[s.title.name] = 1;
+        taste.shownSuggestion = suggest();
+        renderTaste();
+      });
+      return;
+    }
+
+    if (taste.index >= taste.deck.length) taste.deck = taste.deck.concat(buildDeck());
+    var card = taste.deck[taste.index];
+    if (!card) { el.innerHTML = header + '<div class="panel pad">Nothing left to ask about.</div>'; return; }
+
+    var toNext = INTERVAL - (taste.counted % INTERVAL);
+    var pct = Math.min(100, Math.round((taste.counted / FREE_LIMIT) * 100));
+
+    el.innerHTML = header +
+      '<div style="max-width:760px">' +
+        '<div style="margin-bottom:18px">' +
+          '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
+            '<span class="readout">' + taste.counted + ' of ' + FREE_LIMIT + ' free ratings</span>' +
+            '<span class="readout">' + toNext + ' until a suggestion</span>' +
+          '</div>' +
+          '<div class="bar"><span style="width:' + pct + '%"></span></div>' +
+        '</div>' +
+        '<div class="panel" style="overflow:hidden">' +
+          '<div style="display:grid;grid-template-columns:190px minmax(0,1fr)" class="card-body">' +
+            '<div style="padding:16px"><div class="plate-art">' + art(card.name) + '</div></div>' +
+            '<div style="padding:20px 24px 24px 8px;display:flex;flex-direction:column;justify-content:center">' +
+              '<div class="readout">' + esc(card.genres.join(" · ")) + '</div>' +
+              '<h2 style="margin-top:10px;font-size:clamp(1.3rem,3.6vw,1.75rem)">' + esc(card.name) + '</h2>' +
+              '<div style="margin-top:4px;font-family:var(--mono);font-size:12px;color:var(--ink-faint)">' + card.year + '</div>' +
+              '<p style="margin:16px 0 0;font-size:13px;color:var(--ink-dim)">Have you seen it? What did you think?</p>' +
+              '<div style="margin-top:12px">' +
+                '<div style="display:flex;justify-content:space-between;margin-bottom:8px" class="readout"><span>Worse</span><span>Better</span></div>' +
+                '<div class="scale">' +
+                  verdictBtn("HATED", "Hated it", 1) + verdictBtn("DISLIKED", "Not for me", 2) +
+                  verdictBtn("LIKED", "Liked it", 3) + verdictBtn("LOVED", "Loved it", 4) +
+                '</div>' +
+                '<button class="not-seen" data-verdict="NOT_SEEN">I haven\'t seen this<small>Free · doesn\'t count</small></button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    el.querySelectorAll("[data-verdict]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        record(card, b.getAttribute("data-verdict"));
+        taste.index++;
+        if (taste.counted > 0 && taste.counted % INTERVAL === 0) taste.shownSuggestion = suggest();
+        renderTaste();
+      });
+    });
+  }
+
+  function verdictBtn(value, label, level) {
+    var bars = "";
+    for (var i = 1; i <= 4; i++) {
+      bars += '<i style="height:' + (5 + i * 2.5) + 'px;opacity:' + (i <= level ? 0.95 : 0.22) + '"></i>';
+    }
+    return '<button class="verdict v' + level + '" data-verdict="' + value + '"><span class="bars">' + bars + '</span>' + esc(label) + '</button>';
+  }
+
+  /* ================================================================== sheet */
+
+  function openSheet(name) {
+    var t = byName[name];
+    if (!t) return;
+
+    var offers = "";
+    if (t.svc) {
+      var included = t.offer === "FLATRATE";
+      offers += '<div class="offer">' +
+        '<div class="offer-logo" style="background:' + (included ? "var(--signal)" : "#5a6b85") + ';color:' + (included ? "#04120f" : "var(--ink)") + '">' + esc(t.svc.slice(0, 2).toUpperCase()) + '</div>' +
+        '<div class="offer-name">' + esc(t.svc) + '</div>' +
+        (MINE[t.svc] ? '<span class="offer-you">You have this</span>' : '') +
+        '<span class="offer-kind ' + (included ? "inc" : "rent") + '">' + (included ? "Included" : "Rent · $3.99") + '</span>' +
+      '</div>';
+      if (included && t.kind === "Film") {
+        offers += '<div class="offer">' +
+          '<div class="offer-logo" style="background:#5a6b85;color:var(--ink)">AZ</div>' +
+          '<div class="offer-name">Prime Video</div><span class="offer-kind rent">Rent · $3.99</span></div>';
+      }
+    } else {
+      offers = '<div class="offer" style="color:var(--ink-dim);font-size:13.5px">Not streaming anywhere yet. Follow it and you will hear the moment that changes.</div>';
+    }
+
+    var rules = SIGNALS.map(function (s, i) {
+      return '<div class="rule"><div>' +
+        '<div class="rule-name">' + esc(s.t) + (s.optIn ? '<span class="rule-optin">Off by default</span>' : '') + '</div>' +
+        '<div class="rule-desc">' + esc(s.d) + '</div></div>' +
+        '<button class="sw" role="switch" aria-checked="' + (s.optIn ? "false" : "true") + '" aria-label="' + esc(s.t) + '"></button>' +
+      '</div>';
+    }).join("");
+
+    var root = document.getElementById("sheet-root");
+    root.innerHTML =
+      '<div class="backdrop" id="backdrop">' +
+        '<div class="sheet" role="dialog" aria-modal="true" aria-label="Title details" tabindex="-1">' +
+          '<div class="sheet-head">' +
+            '<div><div class="readout">' + (t.kind === "TV" ? "Series" : "Film") + ' · ' + t.year + ' · ' + esc(t.genres.join(", ")) + '</div>' +
+            '<h2 style="margin-top:8px;font-size:clamp(1.4rem,3.4vw,1.9rem)">' + esc(t.name) + '</h2></div>' +
+            '<button class="sheet-close" id="sheet-close" aria-label="Close">✕</button>' +
+          '</div>' +
+          '<div class="sheet-body">' +
+            '<div class="sheet-art"><div class="plate-art">' + art(t.name) + '</div>' +
+              '<button class="btn btn-ghost" style="width:100%;margin-top:12px;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.12em" id="follow-btn" aria-pressed="false">Follow</button>' +
+            '</div>' +
+            '<div>' +
+              '<div class="stats">' +
+                '<div class="stat"><div class="readout">Next up</div><div class="stat-val' + (t.svc ? "" : " live") + '">' + (t.svc ? "Scheduled" : "Not dated") + '</div></div>' +
+                '<div class="stat"><div class="readout">Streaming</div><div class="stat-val' + (t.svc ? "" : " live") + '">' + (t.svc ? "Yes" : "Not yet") + '</div></div>' +
+                '<div class="stat"><div class="readout">Following</div><div class="stat-val">' + (200 + (hash(t.name) % 3000)) + '</div></div>' +
+              '</div>' +
+              '<div class="readout" style="margin:18px 0 10px">Where it streams · United States</div>' +
+              offers +
+              (t.svc && MINE[t.svc] && t.offer === "FLATRATE"
+                ? '<p style="margin-top:12px;font-size:12.5px;color:var(--ink-dim)">Included with ' + esc(t.svc) + ', which you already pay for. Nothing more to spend.</p>' : '') +
+              '<div class="panel pad" style="margin-top:22px;background:var(--panel-2)">' +
+                '<div class="readout" style="margin-bottom:6px">Tell me when</div>' + rules +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    document.body.style.overflow = "hidden";
+    root.querySelector(".sheet").focus();
+
+    root.querySelectorAll(".sw").forEach(function (sw) {
+      sw.addEventListener("click", function () {
+        sw.setAttribute("aria-checked", sw.getAttribute("aria-checked") === "true" ? "false" : "true");
+      });
+    });
+
+    var follow = document.getElementById("follow-btn");
+    follow.addEventListener("click", function () {
+      var on = follow.getAttribute("aria-pressed") === "true";
+      follow.setAttribute("aria-pressed", on ? "false" : "true");
+      follow.textContent = on ? "Follow" : "Following";
+      follow.style.color = on ? "" : "var(--signal)";
+      follow.style.borderColor = on ? "" : "var(--signal-deep)";
+    });
+
+    document.getElementById("sheet-close").addEventListener("click", closeSheet);
+    document.getElementById("backdrop").addEventListener("click", function (e) {
+      if (e.target === e.currentTarget) closeSheet();
+    });
+  }
+
+  function closeSheet() {
+    document.getElementById("sheet-root").innerHTML = "";
+    document.body.style.overflow = "";
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeSheet();
+  });
+
+  /* ============================================================= navigation */
+
+  var PAGES = ["discover", "following", "taste"];
   var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab"));
 
   function show(name) {
-    tabs.forEach(function (t) {
-      t.setAttribute("aria-selected", t.getAttribute("data-screen") === name ? "true" : "false");
-    });
-    ["welcome", "signup", "search", "title", "queue", "alert"].forEach(function (s) {
-      var node = document.getElementById("screen-" + s);
-      if (node) node.hidden = (s !== name);
-    });
+    tabs.forEach(function (t) { t.setAttribute("aria-selected", t.getAttribute("data-page") === name ? "true" : "false"); });
+    PAGES.forEach(function (p) { document.getElementById("page-" + p).hidden = p !== name; });
+    if (name === "taste") renderTaste();
     window.scrollTo({ top: 0, behavior: "instant" });
   }
 
-  tabs.forEach(function (t) {
-    t.addEventListener("click", function () { show(t.getAttribute("data-screen")); });
-  });
+  tabs.forEach(function (t) { t.addEventListener("click", function () { show(t.getAttribute("data-page")); }); });
 
   document.addEventListener("click", function (e) {
-    var trigger = e.target.closest("[data-goto]");
-    if (trigger) show(trigger.getAttribute("data-goto"));
+    var goto = e.target.closest("[data-goto]");
+    if (goto) { show(goto.getAttribute("data-goto")); return; }
+    var title = e.target.closest("[data-title]");
+    if (title) openSheet(title.getAttribute("data-title"));
   });
+
+  /* ============================================================== countdown */
+
+  function tick() {
+    var ms = Math.max(0, TARGET - new Date());
+    var s = Math.floor(ms / 1000);
+    var set = function (id, v) { var n = document.getElementById(id); if (n) n.textContent = v; };
+    set("c-d", pad(Math.floor(s / 86400)));
+    set("c-h", pad(Math.floor((s % 86400) / 3600)));
+    set("c-m", pad(Math.floor((s % 3600) / 60)));
+    set("c-s", pad(s % 60));
+  }
+
+  /* ============================================================== starfield */
+  /* Stars carry a depth z in (0,1]. Projecting by x/z pushes them outward as
+     depth shrinks, which reads as travelling forward rather than drifting. */
+
+  (function () {
+    var canvas = document.getElementById("stars");
+    if (!canvas) return;
+    var ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var SPEED = 0.041;
+    var stars = [], w = 0, h = 0, last = performance.now();
+
+    function spawn(s, depth) {
+      s.x = (Math.random() * 2 - 1) * 1.5;
+      s.y = (Math.random() * 2 - 1) * 1.5;
+      s.z = depth === undefined ? 1 : depth;
+      s.tint = Math.random();
+    }
+
+    function resize() {
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = window.innerWidth; h = window.innerHeight;
+      canvas.width = Math.floor(w * dpr); canvas.height = Math.floor(h * dpr);
+      canvas.style.width = w + "px"; canvas.style.height = h + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      var target = Math.min(520, Math.round((w * h) / 3200));
+      stars = [];
+      for (var i = 0; i < target; i++) { var s = { x: 0, y: 0, z: 1, tint: 0 }; spawn(s, Math.random()); stars.push(s); }
+    }
+
+    function draw(dt) {
+      var cx = w / 2, cy = h / 2, scale = Math.min(w, h) * 0.5;
+      ctx.clearRect(0, 0, w, h);
+      for (var i = 0; i < stars.length; i++) {
+        var s = stars[i];
+        if (!reduce) { s.z -= SPEED * dt; if (s.z <= 0.02) { spawn(s); continue; } }
+        var px = cx + (s.x / s.z) * scale, py = cy + (s.y / s.z) * scale;
+        if (px < -40 || px > w + 40 || py < -40 || py > h + 40) { if (!reduce) spawn(s); continue; }
+        var near = 1 - s.z;
+        var r = 0.4 + near * near * 1.7;
+        var a = Math.min(0.7, 0.1 + near * near * 0.8);
+        ctx.fillStyle = s.tint > 0.82 ? "rgba(69,224,208," + a + ")" : "rgba(222,236,255," + a + ")";
+        ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    function frame(now) {
+      var dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      draw(dt);
+      requestAnimationFrame(frame);
+    }
+
+    resize();
+    window.addEventListener("resize", resize);
+    if (reduce) draw(0); else requestAnimationFrame(frame);
+  })();
+
+  /* =================================================================== boot */
+
+  renderDiscover();
+  renderFollowing();
+  tick();
+  setInterval(tick, 1000);
 })();
 </script>
