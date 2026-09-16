@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import { getCommunityTrending } from '@/lib/queries'
+import { buildHomeRows } from '@/lib/rows'
+import { TitleRow } from '@/components/title-row'
 import { getSessionUser } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/site-header'
 import { TitlePlate } from '@/components/title-plate'
@@ -8,9 +10,10 @@ import { Countdown } from '@/components/countdown'
 import { SIGNALS } from '@/components/signals'
 
 export default async function HomePage() {
-  const [trending, user, next] = await Promise.all([
-    getCommunityTrending(12),
-    getSessionUser(),
+  const user = await getSessionUser()
+  const [trending, rows, next] = await Promise.all([
+    getCommunityTrending(14),
+    buildHomeRows(user?.id ?? null),
     // The hero clock counts down to a real armed event, not a placeholder.
     prisma.releaseEvent.findFirst({
       where: { occursAt: { gt: new Date() }, eventType: { in: ['SEASON_PREMIERE', 'NEW_EPISODE'] } },
@@ -112,20 +115,42 @@ export default async function HomePage() {
           ) : null}
         </section>
 
-        <section className="mt-[clamp(40px,6vw,62px)]">
-          <div className="mb-4 flex flex-wrap items-baseline justify-between gap-4 border-b border-line pb-3">
-            <h2 className="display text-[1.22rem]">Tracked this week</h2>
-            <span className="text-[12.5px] text-ink-faint">What other people started following</span>
+        <section className="mt-[clamp(32px,4vw,48px)]">
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3 border-b border-line pb-2.5">
+            <h2 className="display text-[1.12rem]">Tracked this week</h2>
+            <span className="text-[12px] text-ink-faint">What other people started following</span>
           </div>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3.5">
+          <div
+            className="-mx-[var(--gutter)] flex gap-3.5 overflow-x-auto px-[var(--gutter)] pb-2 [scrollbar-width:thin]"
+            style={{ scrollSnapType: 'x proximity' }}
+          >
             {trending.map((t) => (
-              <TitlePlate
-                key={t.id}
-                title={t}
-                tag={t.followers > 0 ? `${t.followers} following` : null}
-              />
+              <div key={t.id} className="w-[132px] shrink-0" style={{ scrollSnapAlign: 'start' }}>
+                <TitlePlate title={t} tag={t.followers > 0 ? `${t.followers} following` : null} />
+              </div>
             ))}
           </div>
+        </section>
+
+        {rows.map((row) => (
+          <TitleRow key={row.key} row={row} />
+        ))}
+
+        <section className="mt-[clamp(40px,6vw,62px)] panel p-[clamp(20px,4vw,32px)]">
+          <div className="readout">Cannot decide?</div>
+          <h2 className="display mt-3 text-[1.5rem]">
+            Rate a few films and we will find you one.
+          </h2>
+          <p className="mt-3 max-w-[58ch] text-[14.5px] text-ink-dim">
+            Twenty quick verdicts is usually enough to work out what you actually like,
+            rather than what you once said you liked.
+          </p>
+          <Link
+            href="/taste"
+            className="mt-5 inline-block rounded-[4px] bg-signal px-5 py-[11px] text-sm font-semibold text-[#04120f] transition-colors hover:bg-[#63ecdd]"
+          >
+            Find me something to watch
+          </Link>
         </section>
 
         <section className="mt-[clamp(40px,6vw,62px)]">

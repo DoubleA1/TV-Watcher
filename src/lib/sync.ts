@@ -155,7 +155,7 @@ export async function syncTitle(
 
   const prior = await prisma.title.findUnique({
     where: { tmdbId_mediaType: { tmdbId, mediaType } },
-    select: { id: true, hasEverStreamed: true },
+    select: { id: true, hasEverStreamed: true, popularity: true },
   })
 
   // First time we have ever looked at this title, everything about it is
@@ -196,8 +196,10 @@ export async function syncTitle(
       releaseDate: releaseDate && !Number.isNaN(releaseDate.getTime()) ? releaseDate : null,
       status: detail.title.status ?? null,
       popularity: detail.title.popularity ?? 0,
+      priorPopularity: detail.title.popularity ?? 0,
       voteAverage: detail.title.voteAverage ?? 0,
       voteCount: detail.title.voteCount ?? 0,
+      genres: detail.title.genres ?? [],
       collectionId,
     },
     update: {
@@ -205,9 +207,13 @@ export async function syncTitle(
       overview: detail.title.overview ?? null,
       posterPath: detail.title.posterPath ?? null,
       status: detail.title.status ?? null,
+      // Carry the old value forward before overwriting: the delta is what
+      // "climbing fast" means, and it is lost if we only ever store current.
+      priorPopularity: prior?.popularity ?? detail.title.popularity ?? 0,
       popularity: detail.title.popularity ?? 0,
       voteAverage: detail.title.voteAverage ?? 0,
       voteCount: detail.title.voteCount ?? 0,
+      genres: detail.title.genres ?? [],
       collectionId,
       lastRefreshedAt: new Date(),
     },
@@ -384,6 +390,7 @@ export async function syncTitle(
           releaseDate: entry.releaseDate ? new Date(entry.releaseDate) : null,
           status: entry.status ?? null,
           popularity: entry.popularity ?? 0,
+          genres: entry.genres ?? [],
           collectionId,
         },
       })

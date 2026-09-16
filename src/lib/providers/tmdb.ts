@@ -128,6 +128,7 @@ export class TmdbSource implements CatalogSource {
 
     type Detail = TmdbListItem & {
       status?: string
+      genres?: Array<{ id: number; name: string }>
       belongs_to_collection?: { id: number; name: string; poster_path?: string | null } | null
       seasons?: Array<{
         season_number: number
@@ -156,6 +157,7 @@ export class TmdbSource implements CatalogSource {
     const title: SourceTitle = {
       ...base,
       status: detail.status ?? null,
+      genres: (detail.genres ?? []).map((g) => g.name),
       collection: detail.belongs_to_collection
         ? {
             tmdbId: detail.belongs_to_collection.id,

@@ -28,6 +28,7 @@ export async function SiteHeader() {
 
         <nav className="ml-auto flex items-center gap-1 overflow-x-auto">
           <HeaderLink href="/search">Search</HeaderLink>
+          <HeaderLink href="/taste">Find a film</HeaderLink>
           {user ? (
             <>
               <HeaderLink href="/queue">My queue</HeaderLink>

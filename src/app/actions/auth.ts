@@ -8,7 +8,7 @@ import { prisma } from '@/lib/db'
 import { hashPassword, verifyPassword } from '@/lib/auth/password'
 import { normalizePhone } from '@/lib/auth/phone'
 import { consume } from '@/lib/auth/rate-limit'
-import { createSession, destroySession } from '@/lib/auth/session'
+import { createSession, destroySession, getSessionUser } from '@/lib/auth/session'
 
 export type FormState = { error?: string; ok?: boolean }
 
@@ -62,7 +62,7 @@ export async function signUpWithEmail(
   })
 
   await createSession(user.id, meta)
-  redirect('/queue')
+  redirect('/onboarding')
 }
 
 export async function signIn(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -117,6 +117,38 @@ export async function startPhoneSignUp(
     error:
       'Phone sign-up is not switched on yet — carrier registration is still pending. Use email for now and add your number once it clears.',
   }
+}
+
+/**
+ * Attach a phone number to an existing account.
+ *
+ * Stored unverified: nothing is ever texted to a number that has not
+ * confirmed a code, because consent is per-number and A2P compliance
+ * depends on it.
+ */
+export async function addPhoneNumber(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const user = await getSessionUser()
+  if (!user) return { error: 'Sign in first' }
+
+  const phone = normalizePhone(String(formData.get('phone') ?? ''))
+  if (!phone) return { error: 'That does not look like a mobile number' }
+
+  const taken = await prisma.user.findUnique({ where: { phone }, select: { id: true } })
+  if (taken && taken.id !== user.id) {
+    return { error: 'That number is already on another account' }
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { phone, phoneVerifiedAt: null },
+  })
+
+  revalidatePath('/onboarding')
+  revalidatePath('/settings')
+  return { ok: true }
 }
 
 export async function signOut(): Promise<void> {

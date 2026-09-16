@@ -28,6 +28,8 @@ export type SourceTitle = {
   popularity?: number
   voteAverage?: number
   voteCount?: number
+  /// Genre names. Drives homepage rows and the taste recommender.
+  genres?: string[]
   collection?: { tmdbId: number; name: string; posterPath?: string | null } | null
 }
 

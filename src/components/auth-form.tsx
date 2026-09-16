@@ -19,6 +19,14 @@ export function AuthForm({
   return (
     <form action={formAction} className="flex flex-col gap-4">
       {children}
+      {state.ok ? (
+        <p
+          role="status"
+          className="rounded-[4px] border border-signal-deep glow-signal px-3 py-2.5 text-[13px] text-signal"
+        >
+          Saved.
+        </p>
+      ) : null}
       {state.error ? (
         <p
           role="alert"

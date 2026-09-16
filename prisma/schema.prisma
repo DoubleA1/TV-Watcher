@@ -135,6 +135,7 @@ model User {
 
   sessions      Session[]
   services      UserService[]
+  ratings       Rating[]
   follows       Follow[]
   notifications Notification[]
   consents      ConsentRecord[]
@@ -261,8 +262,17 @@ model Title {
   status      String?
 
   popularity  Float @default(0)
+  /// Popularity as of the previous sync. The delta is what "climbing fast"
+  /// means — a title can be popular for years without being interesting.
+  priorPopularity Float @default(0)
   voteAverage Float @default(0)
   voteCount   Int   @default(0)
+
+  /// TMDB genre names. Denormalised deliberately: we only ever read them
+  /// as a set for scoring, never join on them.
+  genres String[] @default([])
+  /// Short editorial hook used on cards. Optional.
+  tagline String?
 
   collectionId String?
   collection   Collection? @relation(fields: [collectionId], references: [id])
@@ -284,6 +294,7 @@ model Title {
   availability Availability[]
   follows      Follow[]
   events       ReleaseEvent[]
+  ratings      Rating[]
 
   @@unique([tmdbId, mediaType])
   @@index([nextRefreshAt])
@@ -385,6 +396,35 @@ model AlertRule {
 
   @@unique([followId, eventType])
   @@index([followId])
+}
+
+/// How strongly someone felt about a film they have seen.
+/// NOT_SEEN is recorded rather than skipped: "I have not seen this" is real
+/// information, and it stops us showing the same card forever.
+enum RatingValue {
+  LOVED
+  LIKED
+  NOT_SEEN
+  DISLIKED
+  HATED
+}
+
+/// One person's verdict on one film. Films only for now — television has a
+/// different shape (you can love four seasons and hate the fifth).
+model Rating {
+  id      String      @id @default(cuid())
+  userId  String
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  titleId String
+  title   Title       @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  value   RatingValue
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, titleId])
+  @@index([userId, value])
+  @@index([titleId])
 }
 
 // ---------------------------------------------------------------------------
