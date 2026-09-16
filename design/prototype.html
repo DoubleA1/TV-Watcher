@@ -83,6 +83,13 @@ body::after {
   pointer-events: none;
 }
 
+#stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
 .shell { position: relative; z-index: 1; }
 
 h1, h2, h3 {
@@ -948,6 +955,8 @@ input:focus {
 }
 </style>
 
+<canvas id="stars" aria-hidden="true"></canvas>
+
 <div class="shell">
 
 <header class="topbar">
@@ -1327,6 +1336,90 @@ input:focus {
 </div>
 
 <script>
+
+// --- starfield ------------------------------------------------------------
+// Stars carry a depth z in (0,1]. Projecting by x/z pushes them outward as
+// depth shrinks, which reads as travelling forward rather than drifting
+// sideways. Background first: slow, low contrast, no competition with text.
+(function () {
+  var canvas = document.getElementById("stars");
+  if (!canvas) return;
+  var ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var SPEED = 0.055;
+  var stars = [], w = 0, h = 0, last = performance.now();
+
+  function spawn(s, depth) {
+    s.x = (Math.random() * 2 - 1) * 1.5;
+    s.y = (Math.random() * 2 - 1) * 1.5;
+    s.z = depth === undefined ? 1 : depth;
+    s.tint = Math.random();
+  }
+
+  function resize() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = window.innerWidth;
+    h = window.innerHeight;
+    canvas.width = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    var target = Math.min(520, Math.round((w * h) / 3200));
+    stars = [];
+    for (var i = 0; i < target; i++) {
+      var s = { x: 0, y: 0, z: 1, tint: 0 };
+      spawn(s, Math.random()); // stagger so the field starts full
+      stars.push(s);
+    }
+  }
+
+  function draw(dt) {
+    var cx = w / 2, cy = h / 2, scale = Math.min(w, h) * 0.5;
+    ctx.clearRect(0, 0, w, h);
+
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      if (!reduce) {
+        s.z -= SPEED * dt;
+        if (s.z <= 0.02) { spawn(s); continue; }
+      }
+
+      var px = cx + (s.x / s.z) * scale;
+      var py = cy + (s.y / s.z) * scale;
+      if (px < -40 || px > w + 40 || py < -40 || py > h + 40) {
+        if (!reduce) spawn(s);
+        continue;
+      }
+
+      var near = 1 - s.z;
+      var r = 0.4 + near * near * 1.7;
+      var a = Math.min(0.7, 0.1 + near * near * 0.8);
+      ctx.fillStyle = s.tint > 0.82
+        ? "rgba(69, 224, 208, " + a + ")"
+        : "rgba(222, 236, 255, " + a + ")";
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function frame(now) {
+    // Clamp dt so a backgrounded tab does not teleport the field.
+    var dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    draw(dt);
+    requestAnimationFrame(frame);
+  }
+
+  resize();
+  window.addEventListener("resize", resize);
+  if (reduce) { draw(0); } else { requestAnimationFrame(frame); }
+})();
+
 (function () {
   "use strict";
 
